@@ -130,6 +130,8 @@
 }
 
 .btn-link {
+  cursor: pointer;
+  font-family: inherit;
   background: rgba(255, 255, 255, 0.08);
   color: var(--white-soft);
   border: 1px solid var(--navy-600);

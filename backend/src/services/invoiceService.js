@@ -52,3 +52,41 @@ export async function getInvoice(referenceCode) {
   const token = await getFactusToken();
   return billsApi.getBillByReference(token, referenceCode);
 }
+
+/**
+ * Reduce la respuesta de createInvoice a lo que el agente/frontend necesita
+ * para mostrar la factura. Acepta tanto la forma simulada (data.number) como
+ * la real de Factus (data.bill.number). Solo expone enlaces que de verdad
+ * existen: en modo mock no hay URL publica ni de cobro.
+ */
+export function summarizeInvoice({ invoice, collection } = {}) {
+  const data = invoice?.data || {};
+  const bill = data.bill || data;
+  const customer = data.customer || {};
+
+  return {
+    number: bill.number,
+    reference_code: bill.reference_code,
+    cufe: bill.cufe,
+    is_validated: Boolean(bill.is_validated ?? bill.validated),
+    created_at: bill.created_at || data.created_at,
+    customer: {
+      name: customer.names || customer.company || customer.graphic_representation_name,
+      identification: customer.identification,
+    },
+    items: (data.items || []).map((item) => ({
+      name: item.name,
+      quantity: Number(item.quantity),
+      price: Number(item.price),
+      tax_rate: Number(item.taxes?.[0]?.rate ?? item.tax_rate ?? 0),
+    })),
+    totals: data.totals || { total: bill.total },
+    public_url: realUrl(bill.public_url || data.links?.public_url),
+    payment_url: realUrl(collection?.data?.collection_url || collection?.data?.url),
+  };
+}
+
+function realUrl(url) {
+  if (typeof url !== 'string' || !/^https:\/\//.test(url)) return null;
+  return new URL(url).hostname.endsWith('.local') ? null : url;
+}

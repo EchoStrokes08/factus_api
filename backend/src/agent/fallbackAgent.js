@@ -17,7 +17,8 @@ export async function handleFallbackMessage(session, text) {
   if (!session.flowStep) session.flowStep = 'ask_customer_name';
   if (!session.flowData) session.flowData = {};
 
-  const trimmed = (text || '').trim();
+  // El reconocimiento de voz suele cerrar la frase con punto ("Juan Perez.").
+  const trimmed = (text || '').trim().replace(/[.!?¡¿]+$/, '').trim();
 
   const globalReply = await handleGlobalIntents(session, trimmed);
   if (globalReply) return globalReply;
@@ -83,14 +84,11 @@ export async function handleFallbackMessage(session, text) {
       if (!isAffirmative(trimmed)) {
         return '¿Confirmo y creo la factura? Responde si o no.';
       }
-      const { result } = await runTool('create_invoice', {}, session);
+      const { invoice } = await runTool('create_invoice', {}, session);
       session.flowStep = 'ask_customer_name';
-      const total = result.invoice?.data?.totals?.total;
-      const url = result.collection?.data?.collection_url;
       return (
-        `Factura creada con numero ${result.invoice?.data?.number || ''}, total $${total || ''}.` +
-        (url ? ` Enlace de cobro: ${url}` : '') +
-        ' ¿Facturamos algo mas? Dime el nombre del siguiente cliente.'
+        `Factura ${invoice.number || ''} creada por un total de $${invoice.totals?.total || ''}. ` +
+        'Te la dejo en pantalla para que la veas. ¿Facturamos algo mas? Dime el nombre del siguiente cliente.'
       );
     }
 

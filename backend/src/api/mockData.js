@@ -42,10 +42,9 @@ export function mockCreateBill(payload) {
       items: payload.items,
       payment_details: payload.payment_details,
       totals: computeTotals(payload.items),
-      links: {
-        qr: null,
-        public_url: `https://factura-sandbox.factus.local/${number}`,
-      },
+      // En modo simulado no existe una factura publica real a la cual
+      // enlazar; el frontend la muestra con estos mismos datos.
+      links: { qr: null, public_url: null },
     },
   };
   bills.set(payload.reference_code, record);
@@ -102,7 +101,7 @@ export function mockCreateCollection({ reference_code, amount }) {
       amount,
       status: isNew ? 'started' : 'ready',
       created_at: new Date().toISOString(),
-      collection_url: `https://pay-sandbox.factus.local/collections/${reference_code}`,
+      collection_url: null,
       qr: isNew ? null : 'mock-qr-base64',
     },
   };
@@ -119,9 +118,13 @@ export function mockListCreditNotes() {
 }
 
 function computeTotals(items = []) {
-  const gross = items.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
-  const taxRate = Number(items[0]?.taxes?.[0]?.rate ?? 0) / 100;
-  const tax = gross * taxRate;
+  let gross = 0;
+  let tax = 0;
+  for (const item of items) {
+    const base = Number(item.price) * Number(item.quantity);
+    gross += base;
+    tax += base * (Number(item.taxes?.[0]?.rate ?? 0) / 100);
+  }
   return {
     gross_amount: gross.toFixed(2),
     taxable_amount: gross.toFixed(2),

@@ -12,9 +12,17 @@ export function useSpeechRecognition({ onResult, lang = 'es-CO' } = {}) {
   const recognitionRef = useRef(null);
   const onResultRef = useRef(onResult);
   onResultRef.current = onResult;
+  // start()/stop() se llaman desde callbacks asincronos (fin del TTS), asi
+  // que el estado real va en un ref; el useState es solo para pintar la UI.
+  const listeningRef = useRef(false);
   const [isListening, setIsListening] = useState(false);
   const [interimText, setInterimText] = useState('');
   const [supported] = useState(Boolean(SpeechRecognitionImpl));
+
+  const setListening = useCallback((value) => {
+    listeningRef.current = value;
+    setIsListening(value);
+  }, []);
 
   useEffect(() => {
     if (!SpeechRecognitionImpl) return;
@@ -25,6 +33,10 @@ export function useSpeechRecognition({ onResult, lang = 'es-CO' } = {}) {
     recognition.interimResults = true;
 
     recognition.onresult = (event) => {
+      // Tras stop() el navegador aun puede entregar el audio pendiente como
+      // resultado final; si ya no escuchamos, se descarta para no duplicar.
+      if (!listeningRef.current) return;
+
       let finalChunk = '';
       let interimChunk = '';
 
@@ -42,29 +54,44 @@ export function useSpeechRecognition({ onResult, lang = 'es-CO' } = {}) {
       }
     };
 
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
+    recognition.onerror = (event) => {
+      // Sin permiso de microfono no tiene sentido reintentar.
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') listeningRef.current = false;
+    };
+    // Chrome corta la escucha tras unos segundos de silencio; si seguimos
+    // en modo escucha, se reanuda sola para no obligar a repetir la frase.
+    recognition.onend = () => {
+      if (!listeningRef.current) {
+        setIsListening(false);
+        return;
+      }
+      try {
+        recognition.start();
+      } catch {
+        setListening(false);
+      }
+    };
 
     recognitionRef.current = recognition;
 
-    return () => recognition.stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang, SpeechRecognitionImpl]);
+    return () => recognition.abort();
+  }, [lang, SpeechRecognitionImpl, setListening]);
 
   const start = useCallback(() => {
-    if (!recognitionRef.current || isListening) return;
+    if (!recognitionRef.current || listeningRef.current) return;
     try {
       recognitionRef.current.start();
-      setIsListening(true);
+      setListening(true);
     } catch {
       // ya estaba iniciado; ignorar
     }
-  }, [isListening]);
+  }, [setListening]);
 
   const stop = useCallback(() => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
-  }, []);
+    setListening(false);
+    setInterimText('');
+    recognitionRef.current?.abort();
+  }, [setListening]);
 
   return { supported, isListening, interimText, start, stop };
 }

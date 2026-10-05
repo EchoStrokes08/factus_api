@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { backendClient } from '../../api/backendClient.js';
+import { InvoiceViewer, normalizeInvoice } from '../documents/InvoiceViewer.jsx';
 import { useSpeechRecognition } from './useSpeechRecognition.js';
 import { useSpeechSynthesis } from './useSpeechSynthesis.js';
 import './CallScreen.css';
@@ -9,6 +10,8 @@ function createSessionId() {
     ? crypto.randomUUID()
     : `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
+
+const money = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
 /**
  * Pantalla principal: una "llamada" con un agente de IA en vez de un
@@ -21,8 +24,14 @@ export function CallScreen({ onActivity }) {
   const [thinking, setThinking] = useState(false);
   const [engine, setEngine] = useState(null);
   const [textInput, setTextInput] = useState('');
+  const [openInvoice, setOpenInvoice] = useState(null);
 
   const sessionIdRef = useRef(createSessionId());
+  // Estado de la conversacion que devuelve el backend y se le reenvia en
+  // cada turno: en serverless cada peticion puede ir a otra instancia.
+  const agentStateRef = useRef(null);
+  // Evita enviar un segundo mensaje mientras el agente aun responde el primero.
+  const busyRef = useRef(false);
   const callStateRef = useRef(callState);
   useEffect(() => {
     callStateRef.current = callState;
@@ -31,25 +40,46 @@ export function CallScreen({ onActivity }) {
   const synthesis = useSpeechSynthesis();
   const recognition = useSpeechRecognition({ onResult: handleUserUtterance });
 
+  async function sendToAgent(text) {
+    const data = await backendClient.sendAgentMessage(sessionIdRef.current, text, agentStateRef.current);
+    agentStateRef.current = data.state ?? null;
+    setEngine(data.engine);
+    return data;
+  }
+
+  function agentMessages(data) {
+    const result = [{ role: 'agent', text: data.reply }];
+    if (data.document) result.push({ role: 'document', invoice: data.document });
+    return result;
+  }
+
+  function listenAfterSpeaking(text) {
+    synthesis.speak(text, {
+      onEnd: () => {
+        // Si la voz se corto porque el usuario escribio, no abrir el microfono
+        // mientras ese mensaje se procesa.
+        if (callStateRef.current === 'active' && !busyRef.current) recognition.start();
+      },
+    });
+  }
+
   async function handleUserUtterance(text) {
-    if (!text?.trim()) return;
+    if (!text?.trim() || busyRef.current) return;
+    busyRef.current = true;
     recognition.stop();
     setMessages((prev) => [...prev, { role: 'user', text }]);
     setThinking(true);
 
     try {
-      const data = await backendClient.sendAgentMessage(sessionIdRef.current, text);
-      setEngine(data.engine);
-      setMessages((prev) => [...prev, { role: 'agent', text: data.reply }]);
+      const data = await sendToAgent(text);
+      setMessages((prev) => [...prev, ...agentMessages(data)]);
       onActivity?.();
-      synthesis.speak(data.reply, {
-        onEnd: () => {
-          if (callStateRef.current === 'active') recognition.start();
-        },
-      });
+      listenAfterSpeaking(data.reply);
     } catch (error) {
       setMessages((prev) => [...prev, { role: 'error', text: error.message }]);
+      if (callStateRef.current === 'active') recognition.start();
     } finally {
+      busyRef.current = false;
       setThinking(false);
     }
   }
@@ -58,12 +88,13 @@ export function CallScreen({ onActivity }) {
     setCallState('connecting');
     setMessages([]);
     setThinking(true);
+    agentStateRef.current = null;
     try {
-      const data = await backendClient.sendAgentMessage(sessionIdRef.current, '');
-      setEngine(data.engine);
-      setMessages([{ role: 'agent', text: data.reply }]);
+      const data = await sendToAgent('');
+      setMessages(agentMessages(data));
       setCallState('active');
-      synthesis.speak(data.reply, { onEnd: () => recognition.start() });
+      callStateRef.current = 'active';
+      listenAfterSpeaking(data.reply);
     } catch (error) {
       setMessages([{ role: 'error', text: error.message }]);
       setCallState('idle');
@@ -78,11 +109,13 @@ export function CallScreen({ onActivity }) {
     setCallState('idle');
     backendClient.endAgentSession(sessionIdRef.current).catch(() => {});
     sessionIdRef.current = createSessionId();
+    agentStateRef.current = null;
   }
 
   function submitText(event) {
     event.preventDefault();
-    if (!textInput.trim()) return;
+    if (!textInput.trim() || busyRef.current) return;
+    synthesis.cancel();
     handleUserUtterance(textInput.trim());
     setTextInput('');
   }
@@ -116,7 +149,9 @@ export function CallScreen({ onActivity }) {
           <span className="pulse-ring" />
           {callState === 'idle' ? '📞' : '🔴'}
         </button>
-        <div className="call-status">{statusLabel}</div>
+        <div className="call-status" aria-live="polite">
+          {statusLabel}
+        </div>
         <div className="call-interim">{recognition.interimText}</div>
         {engine && (
           <span className="engine-badge">{engine === 'claude' ? 'IA conversacional' : 'Asistente guiado'}</span>
@@ -124,11 +159,15 @@ export function CallScreen({ onActivity }) {
       </div>
 
       <div className="transcript-log scrollbar-thin">
-        {messages.map((message, index) => (
-          <div key={index} className={`transcript-bubble ${message.role}`}>
-            {message.text}
-          </div>
-        ))}
+        {messages.map((message, index) =>
+          message.role === 'document' ? (
+            <InvoiceBubble key={index} invoice={message.invoice} onOpen={() => setOpenInvoice(message.invoice)} />
+          ) : (
+            <div key={index} className={`transcript-bubble ${message.role}`}>
+              {message.text}
+            </div>
+          ),
+        )}
       </div>
 
       {callState === 'active' && (
@@ -139,7 +178,9 @@ export function CallScreen({ onActivity }) {
             value={textInput}
             onChange={(event) => setTextInput(event.target.value)}
           />
-          <button type="submit">Enviar</button>
+          <button type="submit" disabled={thinking}>
+            Enviar
+          </button>
         </form>
       )}
 
@@ -148,6 +189,23 @@ export function CallScreen({ onActivity }) {
           Tu navegador no soporta reconocimiento de voz; usa el campo de texto de arriba para hablar con el agente.
         </p>
       )}
+
+      <InvoiceViewer invoice={openInvoice} onClose={() => setOpenInvoice(null)} />
     </div>
+  );
+}
+
+function InvoiceBubble({ invoice, onOpen }) {
+  const view = normalizeInvoice(invoice);
+  return (
+    <button type="button" className="transcript-invoice" onClick={onOpen}>
+      <span className="transcript-invoice-label">Factura creada</span>
+      <span className="transcript-invoice-row">
+        <strong>{view.number || view.referenceCode}</strong>
+        <span>{money.format(view.total)}</span>
+      </span>
+      <span className="transcript-invoice-meta">{view.customerName}</span>
+      <span className="transcript-invoice-cta">Ver factura →</span>
+    </button>
   );
 }

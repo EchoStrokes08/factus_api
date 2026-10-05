@@ -3,11 +3,11 @@ import { resetSession } from '../agent/sessionStore.js';
 import { ApiError } from '../utils/ApiError.js';
 
 export async function sendMessage(req, res) {
-  const { sessionId, text } = req.body;
+  const { sessionId, text, state } = req.body;
   if (!sessionId) {
     throw new ApiError('sessionId es requerido', { source: 'agentController', statusCode: 400 });
   }
-  const result = await handleAgentMessage(sessionId, text);
+  const result = await handleAgentMessage(sessionId, text, state);
   res.json({ status: 'success', data: result });
 }
 

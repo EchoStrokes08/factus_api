@@ -32,8 +32,10 @@ async function request(path, options = {}) {
 }
 
 export const backendClient = {
-  sendAgentMessage: (sessionId, text) =>
-    request('/agent/message', { method: 'POST', body: JSON.stringify({ sessionId, text }) }),
+  // `state` es el estado de la conversacion que devolvio el turno anterior.
+  // El backend es serverless y no recuerda nada entre peticiones.
+  sendAgentMessage: (sessionId, text, state) =>
+    request('/agent/message', { method: 'POST', body: JSON.stringify({ sessionId, text, state }) }),
 
   endAgentSession: (sessionId) => request(`/agent/session/${sessionId}`, { method: 'DELETE' }),
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { backendClient } from '../../api/backendClient.js';
 import { DocumentCard } from './DocumentCard.jsx';
+import { InvoiceViewer } from './InvoiceViewer.jsx';
 import './HistoryPanel.css';
 
 /**
@@ -15,6 +16,7 @@ export function HistoryPanel({ refreshSignal }) {
   const [loading, setLoading] = useState(false);
   const [deletingCode, setDeletingCode] = useState(null);
   const [error, setError] = useState(null);
+  const [openInvoice, setOpenInvoice] = useState(null);
 
   async function loadAll() {
     setLoading(true);
@@ -24,8 +26,8 @@ export function HistoryPanel({ refreshSignal }) {
         backendClient.listInvoices(),
         backendClient.listCreditNotes(),
       ]);
-      setInvoices(invoiceRes?.data || []);
-      setCreditNotes(creditNoteRes?.data || []);
+      setInvoices(asList(invoiceRes));
+      setCreditNotes(asList(creditNoteRes));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -97,8 +99,8 @@ export function HistoryPanel({ refreshSignal }) {
               cufe={invoice.cufe}
               municipalityCode={invoice.customer?.municipality_code}
               isValidated={invoice.is_validated}
-              publicUrl={invoice.links?.public_url}
-              paymentUrl={`https://pay-api-sandbox.factus.com.co/collections/${encodeURIComponent(invoice.reference_code)}`}
+              publicUrl={invoice.public_url || invoice.links?.public_url}
+              onView={() => setOpenInvoice(invoice)}
               deleting={deletingCode === invoice.reference_code}
               onDelete={() => removeInvoice(invoice.reference_code)}
             />
@@ -115,6 +117,15 @@ export function HistoryPanel({ refreshSignal }) {
               onDelete={() => removeCreditNote(note.reference_code)}
             />
           ))}
+
+      <InvoiceViewer invoice={openInvoice} onClose={() => setOpenInvoice(null)} />
     </div>
   );
+}
+
+// El mock devuelve { data: [...] }; Factus real pagina como { data: { data: [...] } }.
+function asList(response) {
+  const data = response?.data;
+  if (Array.isArray(data)) return data;
+  return Array.isArray(data?.data) ? data.data : [];
 }

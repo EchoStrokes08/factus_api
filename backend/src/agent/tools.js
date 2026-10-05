@@ -136,9 +136,11 @@ export async function runTool(name, input, session) {
 
     case 'create_invoice': {
       const result = await invoiceService.createInvoice(session.draft);
+      const invoice = invoiceService.summarizeInvoice(result);
       session.history.push({ type: 'invoice', result });
+      session.createdDocument = invoice;
       resetDraft(session);
-      return { ok: true, result };
+      return { ok: true, invoice };
     }
 
     case 'create_credit_note': {

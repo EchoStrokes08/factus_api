@@ -7,6 +7,7 @@ export function DocumentCard({
   isValidated,
   publicUrl,
   paymentUrl,
+  onView,
   onDelete,
   deleting,
 }) {
@@ -35,6 +36,11 @@ export function DocumentCard({
       )}
 
       <div className="document-card-actions">
+        {onView && (
+          <button type="button" onClick={onView} className="btn-link">
+            Ver factura
+          </button>
+        )}
         {publicUrl && (
           <a
             href={publicUrl}
@@ -42,7 +48,7 @@ export function DocumentCard({
             rel="noopener noreferrer"
             className="btn-link"
           >
-            Ver Factura
+            Ver en Factus
           </a>
         )}
         {paymentUrl && (

@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { env } from '../config/env.js';
-import { getSession } from './sessionStore.js';
+import { getSession, exportSessionState } from './sessionStore.js';
 import { toolDefinitions, runTool } from './tools.js';
 import { handleFallbackMessage, FALLBACK_GREETING } from './fallbackAgent.js';
 import { ApiError } from '../utils/ApiError.js';
@@ -23,6 +23,7 @@ Reglas:
 - Si el usuario pide eliminar una factura o nota credito, pide o usa el codigo de referencia o numero que te den y usa la herramienta correspondiente.
 - Si falta un dato obligatorio (por ejemplo el precio de un producto), preguntalo antes de seguir.
 - Nunca inventes datos de facturacion (precios, identificaciones) que el usuario no te haya dado.
+- Cuando crees una factura, di el numero y el total. No leas enlaces ni URLs: la factura aparece en pantalla para el usuario.
 - Se breve: una o dos frases por turno.`;
 
 let anthropicClient = null;
@@ -31,21 +32,22 @@ function getClient() {
   return anthropicClient;
 }
 
-export async function handleAgentMessage(sessionId, userText) {
-  const session = getSession(sessionId);
+export async function handleAgentMessage(sessionId, userText, clientState) {
+  const session = getSession(sessionId, clientState);
+  session.createdDocument = null;
 
   if (!env.anthropic.apiKey) {
     const reply = userText
       ? await handleFallbackMessage(session, userText)
       : FALLBACK_GREETING;
-    return { reply, draft: session.draft, engine: 'fallback' };
+    return buildResponse(session, reply, 'fallback');
   }
 
   session.messages.push({ role: 'user', content: userText || 'Hola' });
 
   try {
     const finalText = await runAnthropicLoop(session);
-    return { reply: finalText, draft: session.draft, engine: 'claude' };
+    return buildResponse(session, finalText, 'claude');
   } catch (error) {
     logger.error('agentService', 'Fallo la conversacion con Claude', error.message);
     throw error instanceof ApiError
@@ -88,6 +90,17 @@ async function runAnthropicLoop(session) {
   }
 
   return 'Se me complico procesar esa solicitud con varios pasos seguidos. ¿Puedes repetirla de forma mas simple?';
+}
+
+function buildResponse(session, reply, engine) {
+  return {
+    reply,
+    engine,
+    draft: session.draft,
+    // Factura recien creada en este turno (si hubo), para mostrarla en pantalla.
+    document: session.createdDocument || null,
+    state: exportSessionState(session),
+  };
 }
 
 function extractText(content) {

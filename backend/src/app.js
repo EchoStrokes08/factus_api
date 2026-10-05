@@ -28,7 +28,8 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json());
+// El agente reenvia su historial de conversacion en cada mensaje.
+app.use(express.json({ limit: '1mb' }));
 
 app.use('/api', apiRouter);
 // Por compatibilidad si la función serverless en Vercel recibe la ruta sin /api
