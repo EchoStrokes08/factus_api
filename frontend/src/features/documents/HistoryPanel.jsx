@@ -91,9 +91,14 @@ export function HistoryPanel({ refreshSignal }) {
         ? invoices.map((invoice) => (
             <DocumentCard
               key={invoice.reference_code}
-              title={`Factura ${invoice.number}`}
+              title={`Factura ${invoice.number || invoice.reference_code}`}
               meta={`${invoice.customer?.names || invoice.customer?.company || 'Cliente'} · Ref: ${invoice.reference_code}`}
               total={invoice.totals?.total}
+              cufe={invoice.cufe}
+              municipalityCode={invoice.customer?.municipality_code}
+              isValidated={invoice.is_validated}
+              publicUrl={invoice.links?.public_url}
+              paymentUrl={`https://pay-api-sandbox.factus.com.co/collections/${encodeURIComponent(invoice.reference_code)}`}
               deleting={deletingCode === invoice.reference_code}
               onDelete={() => removeInvoice(invoice.reference_code)}
             />
@@ -101,9 +106,11 @@ export function HistoryPanel({ refreshSignal }) {
         : creditNotes.map((note) => (
             <DocumentCard
               key={note.reference_code}
-              title={`Nota credito ${note.number}`}
+              title={`Nota crédito ${note.number || note.reference_code}`}
               meta={`Factura ref. ${note.bill_number} · Ref: ${note.reference_code}`}
               total={note.totals?.total}
+              cufe={note.cufe}
+              isValidated={note.is_validated}
               deleting={deletingCode === note.reference_code}
               onDelete={() => removeCreditNote(note.reference_code)}
             />

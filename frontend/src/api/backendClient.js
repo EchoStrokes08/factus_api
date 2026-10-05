@@ -38,9 +38,12 @@ export const backendClient = {
   endAgentSession: (sessionId) => request(`/agent/session/${sessionId}`, { method: 'DELETE' }),
 
   listInvoices: () => request('/invoices'),
+  getInvoice: (referenceCode) => request(`/invoices/${encodeURIComponent(referenceCode)}`),
   deleteInvoice: (referenceCode) => request(`/invoices/${encodeURIComponent(referenceCode)}`, { method: 'DELETE' }),
 
   listCreditNotes: () => request('/credit-notes'),
   deleteCreditNote: (referenceCode) =>
     request(`/credit-notes/${encodeURIComponent(referenceCode)}`, { method: 'DELETE' }),
+
+  getMunicipalities: () => request('/catalogs/municipalities'),
 };

@@ -47,3 +47,8 @@ export async function listInvoices(params) {
   const token = await getFactusToken();
   return billsApi.listBills(token, params);
 }
+
+export async function getInvoice(referenceCode) {
+  const token = await getFactusToken();
+  return billsApi.getBillByReference(token, referenceCode);
+}

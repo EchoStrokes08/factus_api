@@ -1,7 +1,7 @@
 import { env } from '../config/env.js';
 import { createHttpClient } from './httpClientFactory.js';
 import { ApiError } from '../utils/ApiError.js';
-import { mockCreateBill, mockDeleteBill, mockListBills } from './mockData.js';
+import { mockCreateBill, mockDeleteBill, mockListBills, mockGetBill } from './mockData.js';
 
 const SOURCE = 'factus.bills';
 const http = createHttpClient(env.factus.baseUrl);
@@ -46,6 +46,28 @@ export async function listBills(accessToken, params = {}) {
     const { data } = await http.get('/v2/bills', {
       headers: { Authorization: `Bearer ${accessToken}` },
       params,
+    });
+    return data;
+  } catch (error) {
+    throw ApiError.fromAxiosError(error, SOURCE);
+  }
+}
+
+export async function getBillByReference(accessToken, referenceCode) {
+  if (env.mockMode) {
+    const bill = mockGetBill(referenceCode);
+    if (!bill) {
+      throw new ApiError(`Factura no encontrada para referencia ${referenceCode}`, {
+        statusCode: 404,
+        source: SOURCE,
+      });
+    }
+    return bill;
+  }
+
+  try {
+    const { data } = await http.get(`/v2/bills/show/${encodeURIComponent(referenceCode)}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
     return data;
   } catch (error) {

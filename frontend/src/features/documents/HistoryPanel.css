@@ -69,24 +69,98 @@
   color: var(--white-faint);
 }
 
+.document-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dian-badge {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dane-tag {
+  font-size: 0.72rem;
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+
+.document-cufe {
+  font-family: monospace;
+  font-size: 0.72rem;
+  color: var(--white-faint);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+.cufe-label {
+  color: #facc15;
+  font-weight: 600;
+}
+
 .document-card-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 0.25rem;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  flex-wrap: wrap;
 }
 
-.document-card-actions button {
+.btn-link, .btn-pay {
+  text-decoration: none;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.btn-link {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--white-soft);
+  border: 1px solid var(--navy-600);
+}
+
+.btn-link:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-pay {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+}
+
+.btn-pay:hover {
+  background: rgba(16, 185, 129, 0.25);
+}
+
+.btn-delete {
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid var(--danger);
   color: #fecaca;
-  border-radius: 8px;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.78rem;
+  border-radius: 6px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.75rem;
   cursor: pointer;
 }
 
-.document-card-actions button:hover {
-  background: rgba(239, 68, 68, 0.22);
+.btn-delete:hover {
+  background: rgba(239, 68, 68, 0.25);
 }
 
 .history-empty {

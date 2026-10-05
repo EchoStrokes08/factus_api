@@ -14,3 +14,8 @@ export async function list(req, res) {
   const result = await invoiceService.listInvoices(req.query);
   res.json({ status: 'success', data: result });
 }
+
+export async function get(req, res) {
+  const result = await invoiceService.getInvoice(req.params.referenceCode);
+  res.json({ status: 'success', data: result });
+}

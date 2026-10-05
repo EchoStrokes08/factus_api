@@ -10,6 +10,7 @@ import {
   TAX,
   UNIT_MEASURE,
 } from '../config/catalogs.js';
+import { resolveMunicipalityCode } from '../config/daneDivipola.js';
 import { ApiError } from '../utils/ApiError.js';
 
 /**
@@ -52,7 +53,9 @@ export function buildCustomer(customerDraft = {}) {
     email: customerDraft.email,
     phone: customerDraft.phone,
     country_code: customerDraft.country_code || DEFAULT_COUNTRY_CODE,
-    municipality_code: customerDraft.municipality_code || DEFAULT_MUNICIPALITY_CODE,
+    municipality_code: resolveMunicipalityCode(
+      customerDraft.municipality_code || customerDraft.municipality || customerDraft.city,
+    ),
   };
 }
 

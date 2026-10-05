@@ -57,6 +57,15 @@ export function mockDeleteBill(referenceCode) {
   return { status: 'success', message: existed ? 'Factura eliminada (simulada)' : 'No existia, nada que eliminar' };
 }
 
+export function mockGetBill(referenceCode) {
+  const record = bills.get(referenceCode);
+  if (record) return record;
+  for (const b of bills.values()) {
+    if (b.data?.number === referenceCode) return b;
+  }
+  return null;
+}
+
 export function mockCreateCreditNote(payload) {
   creditNoteCounter += 1;
   const number = `NC990000${creditNoteCounter}`;
