@@ -1,0 +1,19 @@
+{
+  "name": "factus-voice-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "API gateway + agente de voz para crear y eliminar facturas y notas de credito con Factus",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}

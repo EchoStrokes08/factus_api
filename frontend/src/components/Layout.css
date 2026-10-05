@@ -1,0 +1,48 @@
+.app-shell {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  height: 100vh;
+}
+
+.app-main {
+  border-right: 1px solid var(--navy-700);
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem 0.5rem;
+}
+
+.app-header h1 {
+  font-size: 1.1rem;
+  margin: 0;
+  color: var(--white);
+  letter-spacing: 0.01em;
+}
+
+.app-header span {
+  font-size: 0.75rem;
+  color: var(--white-faint);
+}
+
+.app-sidebar {
+  background: rgba(5, 11, 26, 0.5);
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .app-main {
+    border-right: none;
+    border-bottom: 1px solid var(--navy-700);
+  }
+}

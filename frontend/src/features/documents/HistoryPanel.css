@@ -1,0 +1,97 @@
+.history-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.history-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.history-tabs button {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--navy-600);
+  background: transparent;
+  color: var(--white-soft);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.history-tabs button.active {
+  background: var(--blue-accent);
+  color: var(--white);
+  border-color: var(--blue-accent);
+}
+
+.history-refresh {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  color: var(--blue-accent-light);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.document-card {
+  background: var(--navy-900);
+  border: 1px solid var(--navy-700);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.document-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.document-card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.document-card-total {
+  color: var(--blue-accent-light);
+  font-weight: 600;
+}
+
+.document-card-meta {
+  font-size: 0.78rem;
+  color: var(--white-faint);
+}
+
+.document-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.document-card-actions button {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid var(--danger);
+  color: #fecaca;
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.document-card-actions button:hover {
+  background: rgba(239, 68, 68, 0.22);
+}
+
+.history-empty {
+  color: var(--white-faint);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 2rem 0;
+}

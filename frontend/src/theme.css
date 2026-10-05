@@ -1,0 +1,52 @@
+:root {
+  --navy-950: #050b1a;
+  --navy-900: #0a1630;
+  --navy-800: #0f2049;
+  --navy-700: #16305f;
+  --navy-600: #1f4078;
+  --blue-accent: #3b82f6;
+  --blue-accent-light: #60a5fa;
+  --white: #ffffff;
+  --white-soft: rgba(255, 255, 255, 0.82);
+  --white-faint: rgba(255, 255, 255, 0.5);
+  --danger: #ef4444;
+  --success: #22c55e;
+
+  --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  background: radial-gradient(circle at top, var(--navy-800), var(--navy-950) 70%);
+  color: var(--white);
+  min-height: 100vh;
+}
+
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--blue-accent);
+  color: var(--white);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--navy-600);
+  border-radius: 4px;
+}
