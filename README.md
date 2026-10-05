@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Factus Voz
 
 Aplicación web para crear y eliminar **facturas electrónicas** y **notas crédito** a través de las APIs de [Factus](https://developers.factus.com.co) y [Factus Pay](https://pay-developers.factus.com.co) — pero en vez de un dashboard con formularios, la facturación se hace **hablando con un agente de IA**, como si fuera una llamada telefónica.
@@ -107,7 +106,4 @@ Abre `http://localhost:5173`. El reconocimiento de voz (Web Speech API) funciona
 
 - Los montos de ejemplo usan IVA del 19% por defecto si no se especifica otro porcentaje.
 - `MOCK_MODE` vive en la capa `api/` (es una decisión de infraestructura, no de negocio): cada cliente HTTP decide ahí mismo si llama a Factus real o devuelve datos simulados con la misma forma que la respuesta real, así que `services/`, `agent/` y el frontend no necesitan saber en qué modo está corriendo la app.
-=======
-# factus_api
-Develop an application to generate invoices based on two Factus APIs.
->>>>>>> 3b1f7b388978080389b187cc20d599bfbce9d65a
+

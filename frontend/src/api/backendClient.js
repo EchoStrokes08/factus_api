@@ -5,7 +5,12 @@
  * backend (otra base URL, auth de usuario, etc.) solo se toca este archivo.
  */
 
-const BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+// En desarrollo local apunta a http://localhost:4000 si no se especifica.
+// En producción (ej. Vercel con API unificada), un string vacío usa rutas relativas (/api/...)
+const backendEnv = import.meta.env.VITE_BACKEND_URL;
+const BASE_URL = backendEnv !== undefined
+  ? backendEnv
+  : (import.meta.env.DEV ? 'http://localhost:4000' : '');
 
 async function request(path, options = {}) {
   const res = await fetch(`${BASE_URL}/api${path}`, {
