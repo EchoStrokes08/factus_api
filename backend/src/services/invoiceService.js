@@ -3,6 +3,7 @@ import * as collectionsApi from '../api/factusPayCollectionsClient.js';
 import { getFactusToken, getFactusPayToken } from './tokenManager.js';
 import { buildCustomer, buildItems, buildPaymentDetails, computeTotal, generateReferenceCode } from './documentBuilder.js';
 import { logger } from '../utils/logger.js';
+import { env } from '../config/env.js';
 
 /**
  * Logica de negocio de facturas: decide que forma debe tener el documento,
@@ -28,6 +29,13 @@ export async function createInvoice(draft) {
   const invoice = await billsApi.createAndValidateBill(token, payload);
 
   logger.info('invoiceService', `Factura creada: ${referenceCode}`, { total: total.toFixed(2) });
+
+  // Sin credenciales de Factus Pay la factura ya quedo emitida: no la
+  // tumbamos por el cobro, solo omitimos el enlace de pago.
+  if (!env.mockMode && (!env.factusPay.email || !env.factusPay.password)) {
+    logger.info('invoiceService', 'Factus Pay sin credenciales: se omite el cobro');
+    return { invoice, collection: null };
+  }
 
   const payToken = await getFactusPayToken();
   const collection = await collectionsApi.createCollection(payToken, {
