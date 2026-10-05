@@ -1,0 +1,629 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-05T21:39:19.657Z",
+  "title": "Design System: Factus Voz",
+  "extensions": {
+    "colorMeta": {
+      "intaglio-950": {
+        "role": "primary",
+        "displayName": "Deepest Intaglio",
+        "tonalRamp": [
+          "#0b1a15",
+          "#10231c",
+          "#17322a",
+          "#1f4337",
+          "#2c5a4a",
+          "#5e8a77",
+          "#8fb9a4",
+          "#e7efe8"
+        ]
+      },
+      "intaglio-900": {
+        "role": "primary",
+        "displayName": "Intaglio Green",
+        "tonalRamp": [
+          "#0b1a15",
+          "#10231c",
+          "#17322a",
+          "#1f4337",
+          "#2c5a4a",
+          "#5e8a77",
+          "#8fb9a4",
+          "#e7efe8"
+        ]
+      },
+      "intaglio-800": {
+        "role": "primary",
+        "displayName": "Intaglio 800",
+        "tonalRamp": [
+          "#0b1a15",
+          "#10231c",
+          "#17322a",
+          "#1f4337",
+          "#2c5a4a",
+          "#5e8a77",
+          "#8fb9a4",
+          "#e7efe8"
+        ]
+      },
+      "intaglio-700": {
+        "role": "primary",
+        "displayName": "Current-Turn Intaglio",
+        "tonalRamp": [
+          "#0b1a15",
+          "#10231c",
+          "#17322a",
+          "#1f4337",
+          "#2c5a4a",
+          "#5e8a77",
+          "#8fb9a4",
+          "#e7efe8"
+        ]
+      },
+      "intaglio-600": {
+        "role": "primary",
+        "displayName": "Intaglio 600",
+        "tonalRamp": [
+          "#0b1a15",
+          "#10231c",
+          "#17322a",
+          "#1f4337",
+          "#2c5a4a",
+          "#5e8a77",
+          "#8fb9a4",
+          "#e7efe8"
+        ]
+      },
+      "intaglio-line": {
+        "role": "primary",
+        "displayName": "Guilloche Line",
+        "tonalRamp": [
+          "#0b1a15",
+          "#10231c",
+          "#17322a",
+          "#1f4337",
+          "#2c5a4a",
+          "#5e8a77",
+          "#8fb9a4",
+          "#e7efe8"
+        ]
+      },
+      "intaglio-text": {
+        "role": "primary",
+        "displayName": "Ink-Field Text",
+        "tonalRamp": [
+          "#0b1a15",
+          "#10231c",
+          "#17322a",
+          "#1f4337",
+          "#2c5a4a",
+          "#5e8a77",
+          "#8fb9a4",
+          "#e7efe8"
+        ]
+      },
+      "intaglio-text-soft": {
+        "role": "primary",
+        "displayName": "Ink-Field Text Soft",
+        "tonalRamp": [
+          "#0b1a15",
+          "#10231c",
+          "#17322a",
+          "#1f4337",
+          "#2c5a4a",
+          "#5e8a77",
+          "#8fb9a4",
+          "#e7efe8"
+        ]
+      },
+      "intaglio-text-faint": {
+        "role": "primary",
+        "displayName": "Ink-Field Text Faint",
+        "tonalRamp": [
+          "#0b1a15",
+          "#10231c",
+          "#17322a",
+          "#1f4337",
+          "#2c5a4a",
+          "#5e8a77",
+          "#8fb9a4",
+          "#e7efe8"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Security Paper",
+        "tonalRamp": [
+          "#14201b",
+          "#3d4c44",
+          "#5f6e66",
+          "#9eab97",
+          "#c3ccbc",
+          "#dde2d6",
+          "#e9ece3",
+          "#f6f7f2"
+        ]
+      },
+      "paper-raised": {
+        "role": "neutral",
+        "displayName": "Raised Paper",
+        "tonalRamp": [
+          "#14201b",
+          "#3d4c44",
+          "#5f6e66",
+          "#9eab97",
+          "#c3ccbc",
+          "#dde2d6",
+          "#e9ece3",
+          "#f6f7f2"
+        ]
+      },
+      "paper-sunken": {
+        "role": "neutral",
+        "displayName": "Sunken Paper",
+        "tonalRamp": [
+          "#14201b",
+          "#3d4c44",
+          "#5f6e66",
+          "#9eab97",
+          "#c3ccbc",
+          "#dde2d6",
+          "#e9ece3",
+          "#f6f7f2"
+        ]
+      },
+      "paper-rule": {
+        "role": "neutral",
+        "displayName": "Paper Rule",
+        "tonalRamp": [
+          "#14201b",
+          "#3d4c44",
+          "#5f6e66",
+          "#9eab97",
+          "#c3ccbc",
+          "#dde2d6",
+          "#e9ece3",
+          "#f6f7f2"
+        ]
+      },
+      "paper-rule-strong": {
+        "role": "neutral",
+        "displayName": "Paper Rule Strong",
+        "tonalRamp": [
+          "#14201b",
+          "#3d4c44",
+          "#5f6e66",
+          "#9eab97",
+          "#c3ccbc",
+          "#dde2d6",
+          "#e9ece3",
+          "#f6f7f2"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Print Ink",
+        "tonalRamp": [
+          "#14201b",
+          "#3d4c44",
+          "#5f6e66",
+          "#9eab97",
+          "#c3ccbc",
+          "#dde2d6",
+          "#e9ece3",
+          "#f6f7f2"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Print Ink Soft",
+        "tonalRamp": [
+          "#14201b",
+          "#3d4c44",
+          "#5f6e66",
+          "#9eab97",
+          "#c3ccbc",
+          "#dde2d6",
+          "#e9ece3",
+          "#f6f7f2"
+        ]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Print Ink Faint",
+        "tonalRamp": [
+          "#14201b",
+          "#3d4c44",
+          "#5f6e66",
+          "#9eab97",
+          "#c3ccbc",
+          "#dde2d6",
+          "#e9ece3",
+          "#f6f7f2"
+        ]
+      },
+      "serial": {
+        "role": "secondary",
+        "displayName": "Serial Red",
+        "tonalRamp": [
+          "#3f0b0e",
+          "#6a1519",
+          "#8e1c22",
+          "#b3262d",
+          "#d0545a",
+          "#e2898c",
+          "#f3dcd9",
+          "#fbf0ef"
+        ]
+      },
+      "serial-deep": {
+        "role": "secondary",
+        "displayName": "Serial Red Deep",
+        "tonalRamp": [
+          "#3f0b0e",
+          "#6a1519",
+          "#8e1c22",
+          "#b3262d",
+          "#d0545a",
+          "#e2898c",
+          "#f3dcd9",
+          "#fbf0ef"
+        ]
+      },
+      "serial-wash": {
+        "role": "secondary",
+        "displayName": "Serial Wash",
+        "tonalRamp": [
+          "#3f0b0e",
+          "#6a1519",
+          "#8e1c22",
+          "#b3262d",
+          "#d0545a",
+          "#e2898c",
+          "#f3dcd9",
+          "#fbf0ef"
+        ]
+      },
+      "violet": {
+        "role": "secondary",
+        "displayName": "Credit-Note Violet",
+        "tonalRamp": [
+          "#22182e",
+          "#3b2a4f",
+          "#54396f",
+          "#6d4c8f",
+          "#8f73ad",
+          "#b4a0c9",
+          "#e6def0",
+          "#f6f2fa"
+        ]
+      },
+      "violet-wash": {
+        "role": "secondary",
+        "displayName": "Violet Wash",
+        "tonalRamp": [
+          "#22182e",
+          "#3b2a4f",
+          "#54396f",
+          "#6d4c8f",
+          "#8f73ad",
+          "#b4a0c9",
+          "#e6def0",
+          "#f6f2fa"
+        ]
+      },
+      "ochre": {
+        "role": "tertiary",
+        "displayName": "Simulation Ochre",
+        "tonalRamp": [
+          "#2e1f07",
+          "#53390d",
+          "#7a5212",
+          "#a2701f",
+          "#c78a2c",
+          "#ddb06a",
+          "#f4e6c8",
+          "#fbf5e8"
+        ]
+      },
+      "ochre-ink": {
+        "role": "tertiary",
+        "displayName": "Ochre Ink",
+        "tonalRamp": [
+          "#2e1f07",
+          "#53390d",
+          "#7a5212",
+          "#a2701f",
+          "#c78a2c",
+          "#ddb06a",
+          "#f4e6c8",
+          "#fbf5e8"
+        ]
+      },
+      "ochre-wash": {
+        "role": "tertiary",
+        "displayName": "Ochre Wash",
+        "tonalRamp": [
+          "#2e1f07",
+          "#53390d",
+          "#7a5212",
+          "#a2701f",
+          "#c78a2c",
+          "#ddb06a",
+          "#f4e6c8",
+          "#fbf5e8"
+        ]
+      },
+      "valid": {
+        "role": "tertiary",
+        "displayName": "Validation Green",
+        "tonalRamp": [
+          "#0d2a1a",
+          "#1d5636",
+          "#2f7a4f",
+          "#4b9a6b",
+          "#77b993",
+          "#a8d4b8",
+          "#d6eadb",
+          "#f0f8f2"
+        ]
+      },
+      "valid-ink": {
+        "role": "tertiary",
+        "displayName": "Validation Ink",
+        "tonalRamp": [
+          "#0d2a1a",
+          "#1d5636",
+          "#2f7a4f",
+          "#4b9a6b",
+          "#77b993",
+          "#a8d4b8",
+          "#d6eadb",
+          "#f0f8f2"
+        ]
+      },
+      "valid-wash": {
+        "role": "tertiary",
+        "displayName": "Validation Wash",
+        "tonalRamp": [
+          "#0d2a1a",
+          "#1d5636",
+          "#2f7a4f",
+          "#4b9a6b",
+          "#77b993",
+          "#a8d4b8",
+          "#d6eadb",
+          "#f0f8f2"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "State Word",
+        "purpose": "The call state word only; uppercase, condensed to width 62%."
+      },
+      "denomination": {
+        "displayName": "Denomination",
+        "purpose": "Money totals: 1.7rem cards, 1.9rem slip, 2.6rem viewer grand total."
+      },
+      "headline": {
+        "displayName": "Column Heading",
+        "purpose": "Uppercase condensed column headings and the wordmark voice."
+      },
+      "title": {
+        "displayName": "Document Title",
+        "purpose": "Document titles and party names."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "UI and transcript text."
+      },
+      "label": {
+        "displayName": "Field Label",
+        "purpose": "Uppercase functional labels: speaker, table headers, CUFE, invoice fields."
+      },
+      "serial": {
+        "displayName": "Serial",
+        "purpose": "Folios, CUFE, references, DANE codes, counts, timestamps."
+      }
+    },
+    "shadows": [
+      {
+        "name": "paper-rest",
+        "value": "0 1px 2px rgba(20, 32, 27, 0.08)",
+        "purpose": "Document cards at rest on paper."
+      },
+      {
+        "name": "call-button",
+        "value": "0 10px 24px -8px rgba(0, 0, 0, 0.55)",
+        "purpose": "Call button over the rosette; hover 0 14px 28px -8px rgba(0,0,0,0.6)."
+      },
+      {
+        "name": "issued-slip",
+        "value": "0 12px 26px -14px rgba(0, 0, 0, 0.7)",
+        "purpose": "Paper slip lying on the ink field; hover 0 16px 30px -14px rgba(0,0,0,0.75)."
+      },
+      {
+        "name": "viewer-dialog",
+        "value": "0 30px 60px -20px rgba(0, 0, 0, 0.6)",
+        "purpose": "Modal invoice sheet over an rgba(11, 26, 21, 0.78) backdrop."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "All state transitions (0.2-0.25s) and entrances."
+      },
+      {
+        "name": "row-in",
+        "value": "0.45s ease-out, translateY(6px) and fade",
+        "purpose": "Transcript rows entering the ledger."
+      },
+      {
+        "name": "slip-in",
+        "value": "0.6s ease-out, clip-path reveal + translateY(14px) rotate(-0.6deg)",
+        "purpose": "Issued invoice slip unrolling into the ledger."
+      },
+      {
+        "name": "invoice-in",
+        "value": "0.4s ease-out, translateY(16px) scale(0.985)",
+        "purpose": "Invoice viewer dialog opening."
+      },
+      {
+        "name": "tab-marker",
+        "value": "0.35s ease-out scaleX from left",
+        "purpose": "Active tab underline."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation and transition durations 0.01ms; rosette redraws once per state",
+        "purpose": "prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "single-column",
+        "value": "900px"
+      },
+      {
+        "name": "viewer-compact",
+        "value": "560px"
+      },
+      {
+        "name": "ledger-stack",
+        "value": "520px"
+      },
+      {
+        "name": "card-no-seal",
+        "value": "420px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Call Button with Rosette",
+      "kind": "custom",
+      "refersTo": "call-button",
+      "description": "The one primary action: an intaglio-text disc with a phone icon inside the guilloche rosette, on the ink field. Turns serial red to hang up.",
+      "html": "<div class=\"ds-dial-field\"><div class=\"ds-dial\"><svg class=\"ds-rosette\" viewBox=\"0 0 200 200\" aria-hidden=\"true\"><ellipse cx=\"100\" cy=\"100\" rx=\"50\" ry=\"94\" transform=\"rotate(0.0 100 100)\" fill=\"none\" stroke=\"#8fb9a4\" stroke-width=\"0.8\" opacity=\"0.25\"/><ellipse cx=\"100\" cy=\"100\" rx=\"53\" ry=\"91\" transform=\"rotate(16.4 100 100)\" fill=\"none\" stroke=\"#8fb9a4\" stroke-width=\"0.8\" opacity=\"0.29\"/><ellipse cx=\"100\" cy=\"100\" rx=\"56\" ry=\"88\" transform=\"rotate(32.8 100 100)\" fill=\"none\" stroke=\"#8fb9a4\" stroke-width=\"0.8\" opacity=\"0.33\"/><ellipse cx=\"100\" cy=\"100\" rx=\"59\" ry=\"85\" transform=\"rotate(49.2 100 100)\" fill=\"none\" stroke=\"#8fb9a4\" stroke-width=\"0.8\" opacity=\"0.37\"/><ellipse cx=\"100\" cy=\"100\" rx=\"62\" ry=\"82\" transform=\"rotate(65.6 100 100)\" fill=\"none\" stroke=\"#8fb9a4\" stroke-width=\"0.8\" opacity=\"0.41\"/><ellipse cx=\"100\" cy=\"100\" rx=\"65\" ry=\"79\" transform=\"rotate(82.0 100 100)\" fill=\"none\" stroke=\"#8fb9a4\" stroke-width=\"0.8\" opacity=\"0.45\"/><ellipse cx=\"100\" cy=\"100\" rx=\"68\" ry=\"76\" transform=\"rotate(98.4 100 100)\" fill=\"none\" stroke=\"#8fb9a4\" stroke-width=\"0.8\" opacity=\"0.49\"/><ellipse cx=\"100\" cy=\"100\" rx=\"71\" ry=\"73\" transform=\"rotate(114.8 100 100)\" fill=\"none\" stroke=\"#e7efe8\" stroke-width=\"0.8\" opacity=\"0.53\"/><ellipse cx=\"100\" cy=\"100\" rx=\"74\" ry=\"70\" transform=\"rotate(131.2 100 100)\" fill=\"none\" stroke=\"#8fb9a4\" stroke-width=\"0.8\" opacity=\"0.57\"/><ellipse cx=\"100\" cy=\"100\" rx=\"77\" ry=\"67\" transform=\"rotate(147.6 100 100)\" fill=\"none\" stroke=\"#8fb9a4\" stroke-width=\"0.8\" opacity=\"0.61\"/><ellipse cx=\"100\" cy=\"100\" rx=\"80\" ry=\"64\" transform=\"rotate(164.0 100 100)\" fill=\"none\" stroke=\"#e7efe8\" stroke-width=\"0.8\" opacity=\"0.65\"/></svg><button class=\"ds-call-button\" type=\"button\" aria-label=\"Llamar\"><svg width=\"34\" height=\"34\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z\"/></svg></button></div><p class=\"ds-call-state\">Llamar</p></div>",
+      "css": ".ds-dial-field { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; padding: 2rem; background: var(--intaglio-900); } .ds-dial { position: relative; width: 220px; height: 220px; display: grid; place-items: center; } .ds-rosette { position: absolute; inset: 0; width: 100%; height: 100%; } .ds-call-button { position: relative; width: 38%; aspect-ratio: 1; border-radius: 50%; border: 1px solid rgba(231, 239, 232, 0.55); outline: 1px solid rgba(231, 239, 232, 0.2); outline-offset: 4px; display: grid; place-items: center; cursor: pointer; color: var(--intaglio-900); background: var(--intaglio-text); box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.55); transition: transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out); } .ds-call-button:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -8px rgba(0, 0, 0, 0.6); } .ds-call-button:active { transform: scale(0.97); } .ds-call-button:focus-visible { outline: 2px solid var(--intaglio-text); outline-offset: 5px; } .ds-call-state { margin: 0; font-family: var(--font-ui); font-size: 4rem; font-weight: 800; font-stretch: 62%; line-height: 0.88; letter-spacing: -0.01em; text-transform: uppercase; color: var(--intaglio-text); }"
+    },
+    {
+      "name": "Primary Document Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Intaglio-filled action on paper, e.g. Ver factura.",
+      "html": "<button class=\"ds-btn ds-btn-primary\" type=\"button\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg>Ver factura</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 32px; padding: 0.3rem 0.7rem; font-family: var(--font-ui); font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); background: transparent; border: 1px solid var(--paper-rule-strong); border-radius: var(--radius); cursor: pointer; transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out); } .ds-btn:focus-visible { outline: 2px solid var(--serial); outline-offset: 2px; } .ds-btn-primary { background: var(--intaglio-900); border-color: var(--intaglio-900); color: var(--intaglio-text); } .ds-btn-primary:hover { background: var(--intaglio-700); color: #fff; }"
+    },
+    {
+      "name": "Outline Document Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action on paper, e.g. Ver en Factus, Cancelar.",
+      "html": "<button class=\"ds-btn\" type=\"button\">Cancelar</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 32px; padding: 0.3rem 0.7rem; font-family: var(--font-ui); font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); background: transparent; border: 1px solid var(--paper-rule-strong); border-radius: var(--radius); cursor: pointer; transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out); } .ds-btn:focus-visible { outline: 2px solid var(--serial); outline-offset: 2px; } .ds-btn:hover { background: #fff; color: var(--ink); }"
+    },
+    {
+      "name": "Danger Button and Confirmation",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Borderless serial-red action; confirmation spells out the consequence and needs a solid red second click.",
+      "html": "<div class=\"ds-confirm-row\"><button class=\"ds-btn ds-btn-danger\" type=\"button\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 6h18\"/><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"/><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"/></svg>Anular</button><div class=\"ds-confirm\"><span>Se emitirá una nota crédito ante la DIAN.</span><button class=\"ds-btn ds-btn-danger-solid\" type=\"button\">Sí, anular</button><button class=\"ds-btn\" type=\"button\">Cancelar</button></div></div>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 32px; padding: 0.3rem 0.7rem; font-family: var(--font-ui); font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); background: transparent; border: 1px solid var(--paper-rule-strong); border-radius: var(--radius); cursor: pointer; transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out); } .ds-btn:focus-visible { outline: 2px solid var(--serial); outline-offset: 2px; } .ds-confirm-row { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem; background: var(--paper-raised); } .ds-btn-danger { align-self: flex-end; color: var(--serial); border-color: transparent; } .ds-btn-danger:hover { background: var(--serial-wash); color: var(--serial-deep); } .ds-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; font-family: var(--font-ui); font-size: 0.82rem; color: var(--serial-deep); } .ds-confirm span { flex: 1 1 12rem; font-weight: 600; } .ds-btn-danger-solid { background: var(--serial); border-color: var(--serial); color: #fff; } .ds-btn-danger-solid:hover { background: var(--serial-deep); }"
+    },
+    {
+      "name": "Status Tags",
+      "kind": "chip",
+      "refersTo": "tag-valid",
+      "description": "Denominational status chips: validated, simulated, unvalidated, DANE code.",
+      "html": "<ul class=\"ds-tags\"><li class=\"ds-tag ds-tag-valid\">Validada DIAN</li><li class=\"ds-tag ds-tag-mock\">Simulada</li><li class=\"ds-tag ds-tag-draft\">Sin validar</li><li class=\"ds-tag ds-tag-dane\">DANE <span class=\"ds-serial\">11001</span></li></ul>",
+      "css": ".ds-tags { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0.35rem; } .ds-tag { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.5rem; font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600; border-radius: var(--radius); white-space: nowrap; } .ds-tag-valid { background: var(--valid-wash); color: #1d5636; } .ds-tag-mock { background: var(--ochre-wash); color: var(--ochre-ink); } .ds-tag-draft { background: var(--paper-sunken); color: var(--ink-soft); } .ds-tag-dane { border: 1px solid var(--paper-rule-strong); color: var(--ink-soft); } .ds-serial { font-family: var(--font-serial); font-variant-numeric: tabular-nums slashed-zero; letter-spacing: 0.02em; }"
+    },
+    {
+      "name": "Document Ficha",
+      "kind": "card",
+      "refersTo": "document-card",
+      "description": "Fixed-scale document card on security paper: seal, title with red folio, condensed total, meta, CUFE line.",
+      "html": "<article class=\"ds-card\"><svg class=\"ds-seal\" width=\"52\" height=\"52\" viewBox=\"0 0 100 100\" aria-hidden=\"true\"><circle cx=\"50\" cy=\"50\" r=\"49\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"0.6\" opacity=\"0.5\"/><ellipse cx=\"50\" cy=\"50\" rx=\"20\" ry=\"40\" transform=\"rotate(0 50 50)\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"0.55\" opacity=\"0.35\"/><ellipse cx=\"50\" cy=\"50\" rx=\"23\" ry=\"38\" transform=\"rotate(23 50 50)\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"0.55\" opacity=\"0.55\"/><ellipse cx=\"50\" cy=\"50\" rx=\"26\" ry=\"36\" transform=\"rotate(46 50 50)\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"0.55\" opacity=\"0.75\"/><ellipse cx=\"50\" cy=\"50\" rx=\"29\" ry=\"34\" transform=\"rotate(69 50 50)\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"0.55\" opacity=\"0.35\"/><ellipse cx=\"50\" cy=\"50\" rx=\"32\" ry=\"32\" transform=\"rotate(92 50 50)\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"0.55\" opacity=\"0.55\"/><ellipse cx=\"50\" cy=\"50\" rx=\"35\" ry=\"30\" transform=\"rotate(115 50 50)\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"0.55\" opacity=\"0.75\"/><ellipse cx=\"50\" cy=\"50\" rx=\"38\" ry=\"28\" transform=\"rotate(138 50 50)\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"0.55\" opacity=\"0.35\"/><ellipse cx=\"50\" cy=\"50\" rx=\"41\" ry=\"26\" transform=\"rotate(161 50 50)\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"0.55\" opacity=\"0.55\"/><ellipse cx=\"50\" cy=\"50\" rx=\"44\" ry=\"24\" transform=\"rotate(184 50 50)\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"0.55\" opacity=\"0.75\"/></svg><div class=\"ds-card-main\"><header class=\"ds-card-head\"><h3 class=\"ds-card-title\">Factura <span class=\"ds-folio\">SETP9900001001</span></h3><span class=\"ds-card-total\">$ 95.200</span></header><p class=\"ds-card-meta\">María Gómez <span class=\"ds-ref\">Ref. FACT-1791235135127</span></p><p class=\"ds-cufe\"><b>CUFE</b> mock-cufe-1001</p></div></article>",
+      "css": ".ds-card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem; padding: 1rem 1.1rem; font-family: var(--font-ui); color: var(--ink); background: var(--paper-raised); border: 1px solid var(--paper-rule-strong); outline: 1px solid var(--paper-rule); outline-offset: -5px; border-radius: var(--radius); box-shadow: 0 1px 2px rgba(20, 32, 27, 0.08); } .ds-seal { color: var(--intaglio-700); } .ds-card-main { display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; } .ds-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; } .ds-card-title { margin: 0; font-size: 1rem; font-weight: 700; } .ds-folio { font-family: var(--font-serial); font-variant-numeric: tabular-nums slashed-zero; color: var(--serial); font-weight: 600; } .ds-card-total { font-size: 1.7rem; font-weight: 800; font-stretch: 68%; line-height: 1; font-variant-numeric: tabular-nums; } .ds-card-meta { margin: 0; display: flex; gap: 0.75rem; font-size: 0.85rem; color: var(--ink-soft); } .ds-ref { font-family: var(--font-serial); font-size: 0.74rem; color: var(--ink-faint); } .ds-cufe { margin: 0; font-family: var(--font-serial); font-size: 0.72rem; color: var(--ink-faint); } .ds-cufe b { color: var(--ink-soft); }"
+    },
+    {
+      "name": "Engraved Text Field",
+      "kind": "input",
+      "refersTo": "text-field-engraved",
+      "description": "Typing fallback on the ink field: a deep intaglio well with a square send button.",
+      "html": "<form class=\"ds-field\" onsubmit=\"return false\"><input type=\"text\" placeholder=\"O escribe aquí si prefieres no hablar...\" aria-label=\"Mensaje\"><button type=\"submit\" aria-label=\"Enviar\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m5 12 7-7 7 7\"/><path d=\"M12 19V5\"/></svg></button></form>",
+      "css": ".ds-field { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.35rem 0.35rem 1rem; background: var(--intaglio-950); border: 1px solid rgba(143, 185, 164, 0.3); border-radius: var(--radius); transition: border-color 0.2s var(--ease-out); } .ds-field:focus-within { border-color: var(--intaglio-line); } .ds-field input { flex: 1; min-width: 0; padding: 0.55rem 0; border: none; background: transparent; font-family: var(--font-ui); font-size: 0.95rem; color: var(--intaglio-text); caret-color: var(--intaglio-line); } .ds-field input::placeholder { color: var(--intaglio-text-faint); } .ds-field input:focus { outline: none; } .ds-field button { width: 40px; height: 40px; display: grid; place-items: center; border: none; border-radius: var(--radius); background: var(--intaglio-text); color: var(--intaglio-900); cursor: pointer; transition: background-color 0.2s var(--ease-out); } .ds-field button:hover { background: #fff; } .ds-field button:focus-visible { outline: 2px solid var(--intaglio-text); outline-offset: 2px; }"
+    },
+    {
+      "name": "History Tabs",
+      "kind": "nav",
+      "description": "Text tabs on paper with serial count chips and a 3px intaglio marker; violet on credit notes.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab is-active\" role=\"tab\" aria-selected=\"true\">Facturas <span class=\"ds-count\">9</span></button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Notas crédito <span class=\"ds-count\">0</span></button></div>",
+      "css": ".ds-tabs { display: flex; gap: 1.5rem; padding: 0 1.75rem; background: var(--paper); border-bottom: 1px solid var(--paper-rule-strong); } .ds-tab { position: relative; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0 0.7rem; border: none; background: none; font-family: var(--font-ui); font-size: 0.92rem; font-weight: 600; color: var(--ink-faint); cursor: pointer; transition: color 0.2s var(--ease-out); } .ds-tab:hover, .ds-tab.is-active { color: var(--ink); } .ds-tab::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--intaglio-900); transform: scaleX(0); transform-origin: left; transition: transform 0.35s var(--ease-out); } .ds-tab.is-active::after { transform: scaleX(1); } .ds-tab:focus-visible { outline: 2px solid var(--serial); outline-offset: 2px; } .ds-count { min-width: 1.6rem; padding: 0.05rem 0.35rem; font-family: var(--font-serial); font-size: 0.72rem; text-align: center; border-radius: var(--radius); background: var(--paper-sunken); color: var(--ink-soft); } .ds-tab.is-active .ds-count { background: var(--intaglio-900); color: var(--intaglio-text); }"
+    },
+    {
+      "name": "Transcript Ledger Row",
+      "kind": "custom",
+      "description": "Conversation as ledger rows on the ink field: speaker label, text, right-aligned serial time; current turn on an intaglio-700 band.",
+      "html": "<ol class=\"ds-ledger\"><li class=\"ds-row ds-row-user\"><span class=\"ds-speaker\">Tú</span><p class=\"ds-text\">si</p><time class=\"ds-time\">16:32:33</time></li><li class=\"ds-row ds-row-current\"><span class=\"ds-speaker\">Agente</span><p class=\"ds-text\">Factura SETP9900001009 creada por un total de $95200.00.</p><time class=\"ds-time\">16:32:33</time></li></ol>",
+      "css": ".ds-ledger { margin: 0; padding: 1rem; list-style: none; background: var(--intaglio-900); font-family: var(--font-ui); } .ds-row { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) auto; gap: 0 1rem; align-items: baseline; padding: 0.7rem 0.75rem; border-bottom: 1px dashed rgba(143, 185, 164, 0.16); } .ds-speaker { font-size: 0.72rem; font-weight: 700; font-stretch: 80%; text-transform: uppercase; letter-spacing: 0.08em; color: var(--intaglio-text-faint); } .ds-row-user .ds-speaker { color: var(--intaglio-line); } .ds-text { margin: 0; font-size: 0.98rem; line-height: 1.5; color: var(--intaglio-text-soft); } .ds-row-user .ds-text { color: var(--intaglio-text); font-weight: 500; } .ds-time { font-family: var(--font-serial); font-variant-numeric: tabular-nums slashed-zero; font-size: 0.7rem; color: var(--intaglio-text-faint); text-align: right; } .ds-row-current { background: var(--intaglio-700); border-bottom-color: transparent; } .ds-row-current .ds-speaker, .ds-row-current .ds-time { color: var(--intaglio-text); } .ds-row-current .ds-text { color: #fff; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Security Press",
+    "overview": "Speaking issues a document of value, so the interface is printed like one. The system borrows the grammar of Colombian banknote and fiscal-paper security printing: intaglio green ink fields, guilloche line-work, hairline double frames, red serial numbering, and denomination numerals set condensed and heavy. It refuses the category default of a dark SaaS voice panel with a glowing orb and chat bubbles; the conversation is a ledger, the agent's presence is a guilloche rosette, and every issued document carries its own engraved seal.\n\nColour is committed per region rather than sprinkled. The call column is entirely intaglio ink, light text on deep green, with a faint cross-hatched line pattern and a guilloche band framing it. Documents live on cool green-grey security paper with a fine horizontal rule pattern. Accent inks are denominational: serial red means a number or an irreversible act, ochre means simulated, violet means credit note. Density is moderate and legible from across a room: one oversized state word, a quiet ledger, cards at a fixed scale.\n\nDepth is mostly printed, not lifted. Frames are drawn with borders, inset outlines, double rules and border-image bands; shadows are soft and reserved for objects that sit on top of the ink field (the call button, the issued slip, the viewer dialog).",
+    "keyCharacteristics": [
+      "Two-region colour commitment: intaglio ink field (call) versus security paper (documents).",
+      "Guilloche as the signature material: a live voice-driven rosette, deterministic per-document seals, and a 9-slice guilloche border band.",
+      "Archivo variable with the width axis: condensed heavy display for states and amounts, normal width for UI.",
+      "JetBrains Mono, tabular and slashed-zero, for every serial, CUFE, reference, DANE code, count and timestamp.",
+      "One radius (4px) everywhere except true circles."
+    ],
+    "rules": [
+      {
+        "name": "The Region Commitment Rule",
+        "body": "Intaglio green owns the call surface entirely and paper owns the documents. Do not drop paper cards onto green except for an issued document arriving (the slip), and do not paint green panels inside the paper column beyond buttons and markers.",
+        "section": "colors"
+      },
+      {
+        "name": "The Denomination Rule",
+        "body": "Each accent has one meaning: red is serial numbers and irreversible acts, ochre is simulated, violet is credit note, validation green is DIAN-validated. Never use an accent for decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The Serial Rule",
+        "body": "Any machine identifier or time (folio, CUFE, reference, DANE code, count, timestamp) is set in the serial mono. Folios are additionally serial red.",
+        "section": "typography"
+      },
+      {
+        "name": "The Width-Axis Rule",
+        "body": "Emphasis comes from condensing and weighting Archivo (width 62 to 80%, 700 to 800), not from a second display family.",
+        "section": "typography"
+      },
+      {
+        "name": "The Printed Frame Rule",
+        "body": "Separate with lines first (border, inset outline, double rule, guilloche band); reach for a shadow only when an object physically sits on another surface.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep the call surface entirely intaglio green with the guilloche band frame and line hatch, and the documents on security paper.",
+      "Do set every folio, CUFE, reference, DANE code, count and timestamp in JetBrains Mono with tabular, slashed-zero figures; folios in serial red.",
+      "Do set money totals in condensed heavy Archivo (800, width 66 to 68%, tabular), as the strongest figure on the document.",
+      "Do give every issued document its CUFE-derived guilloche seal and reuse the same seal wherever that document appears.",
+      "Do frame containers with a border plus an offset outline, double rules or the guilloche band before adding any shadow.",
+      "Do spell out the consequence of a destructive action in serial-deep and require a second, solid red confirmation.",
+      "Do use the 4px corner on every rectangle and the ease-out curve (cubic-bezier(0.16, 1, 0.3, 1)) for state transitions."
+    ],
+    "donts": [
+      "Don't use a glowing orb, chat bubbles or a generic dark SaaS panel for the voice agent; the agent is the rosette and the conversation is a ledger.",
+      "Don't use serial red, ochre or violet outside their meanings (serial or destructive, simulated, credit note).",
+      "Don't add glass, blur or decorative colour gradients; the only repeating gradients allowed are the 1px security-line hatches, plus functional masks and loading shimmer.",
+      "Don't use emoji; icons are lucide line icons at 12 to 14px (28px in the live call button) with stroke 2.",
+      "Don't introduce a second display family or pill-shaped controls."
+    ]
+  }
+}

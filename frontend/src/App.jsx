@@ -5,10 +5,11 @@ import { HistoryPanel } from './features/documents/HistoryPanel.jsx';
 
 export default function App() {
   const [refreshSignal, setRefreshSignal] = useState(0);
+  const [engine, setEngine] = useState(null);
 
   return (
-    <Layout>
-      <CallScreen onActivity={() => setRefreshSignal((value) => value + 1)} />
+    <Layout engine={engine}>
+      <CallScreen onActivity={() => setRefreshSignal((value) => value + 1)} onEngine={setEngine} />
       <HistoryPanel refreshSignal={refreshSignal} />
     </Layout>
   );

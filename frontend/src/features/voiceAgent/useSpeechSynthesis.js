@@ -11,7 +11,7 @@ export function useSpeechSynthesis({ lang = 'es-CO' } = {}) {
   const utteranceRef = useRef(null);
 
   const speak = useCallback(
-    (text, { onEnd } = {}) => {
+    (text, { onEnd, onWord } = {}) => {
       if (!supported || !text) {
         onEnd?.();
         return;
@@ -22,6 +22,10 @@ export function useSpeechSynthesis({ lang = 'es-CO' } = {}) {
       utterance.lang = lang;
       utterance.rate = 1.02;
       utterance.onstart = () => setIsSpeaking(true);
+      // Cada palabra pronunciada; la UI la usa para animar el roseton.
+      utterance.onboundary = (event) => {
+        if (event.name === 'word') onWord?.();
+      };
       utterance.onend = () => {
         setIsSpeaking(false);
         onEnd?.();

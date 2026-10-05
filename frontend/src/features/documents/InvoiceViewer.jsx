@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { GuillocheSeal } from '../../components/Guilloche.jsx';
 import './InvoiceViewer.css';
 
 const money = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
@@ -63,11 +64,12 @@ export function InvoiceViewer({ invoice, onClose }) {
     >
       <article className="invoice-sheet">
         <header className="invoice-head">
-          <div>
-            <p className="invoice-kicker">Factura electrónica de venta</p>
-            <h2 id="invoice-title" className="invoice-number">
-              {view.number || view.referenceCode}
+          <GuillocheSeal seed={view.cufe || view.number || view.referenceCode} size={72} className="invoice-seal" />
+          <div className="invoice-head-text">
+            <h2 id="invoice-title" className="invoice-doc-type">
+              Factura electrónica de venta
             </h2>
+            <p className="invoice-number serial">{view.number || view.referenceCode}</p>
             {view.createdAt && (
               <p className="invoice-date">
                 {view.createdAt.toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' })}
@@ -126,7 +128,7 @@ export function InvoiceViewer({ invoice, onClose }) {
 
         {view.cufe && (
           <p className="invoice-cufe">
-            <span className="invoice-label">CUFE</span>
+            <span className="invoice-label">CUFE · Código Único de Factura Electrónica</span>
             {view.cufe}
           </p>
         )}

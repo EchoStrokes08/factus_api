@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { backendClient } from '../../api/backendClient.js';
+import { GuillocheSeal } from '../../components/Guilloche.jsx';
 import { DocumentCard } from './DocumentCard.jsx';
 import { InvoiceViewer } from './InvoiceViewer.jsx';
 import './HistoryPanel.css';
+
+const TABS = [
+  { id: 'invoices', label: 'Facturas' },
+  { id: 'creditNotes', label: 'Notas crédito' },
+];
 
 /**
  * Panel secundario (no es el centro de la app) para ver y eliminar
@@ -14,6 +21,7 @@ export function HistoryPanel({ refreshSignal }) {
   const [invoices, setInvoices] = useState([]);
   const [creditNotes, setCreditNotes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadedOnce, setLoadedOnce] = useState(false);
   const [deletingCode, setDeletingCode] = useState(null);
   const [error, setError] = useState(null);
   const [openInvoice, setOpenInvoice] = useState(null);
@@ -32,6 +40,7 @@ export function HistoryPanel({ refreshSignal }) {
       setError(err.message);
     } finally {
       setLoading(false);
+      setLoadedOnce(true);
     }
   }
 
@@ -65,58 +74,114 @@ export function HistoryPanel({ refreshSignal }) {
   }
 
   const items = tab === 'invoices' ? invoices : creditNotes;
+  const counts = { invoices: invoices.length, creditNotes: creditNotes.length };
 
   return (
-    <div className="history-panel scrollbar-thin">
-      <div className="history-tabs">
-        <button type="button" className={tab === 'invoices' ? 'active' : ''} onClick={() => setTab('invoices')}>
-          Facturas ({invoices.length})
-        </button>
+    <div className="history-panel">
+      <header className="history-head">
+        <h2>Documentos</h2>
         <button
           type="button"
-          className={tab === 'creditNotes' ? 'active' : ''}
-          onClick={() => setTab('creditNotes')}
+          className={`history-refresh ${loading ? 'is-loading' : ''}`}
+          onClick={loadAll}
+          disabled={loading}
+          aria-label={loading ? 'Actualizando documentos' : 'Actualizar documentos'}
+          title="Actualizar"
         >
-          Notas credito ({creditNotes.length})
+          <RefreshCw size={16} strokeWidth={2} aria-hidden="true" />
         </button>
+      </header>
+
+      <div className="history-tabs" role="tablist" aria-label="Tipo de documento">
+        {TABS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            id={`tab-${item.id}`}
+            aria-selected={tab === item.id}
+            aria-controls="history-list"
+            className={tab === item.id ? 'active' : ''}
+            onClick={() => setTab(item.id)}
+          >
+            {item.label}
+            <span className="serial history-count">{counts[item.id]}</span>
+          </button>
+        ))}
       </div>
 
-      <button type="button" className="history-refresh" onClick={loadAll} disabled={loading}>
-        {loading ? 'Actualizando...' : 'Refrescar'}
-      </button>
+      <div
+        id="history-list"
+        className="history-list scrollbar-thin"
+        role="tabpanel"
+        aria-labelledby={`tab-${tab}`}
+        aria-busy={loading}
+      >
+        {error && (
+          <div className="history-error" role="alert">
+            <strong>No se pudieron cargar o modificar los documentos.</strong>
+            <span>{error}</span>
+            <button type="button" className="doc-btn" onClick={loadAll}>
+              Reintentar
+            </button>
+          </div>
+        )}
 
-      {error && <div className="transcript-bubble error">{error}</div>}
+        {loading && !loadedOnce && (
+          <div className="history-skeleton" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+        )}
 
-      {!loading && items.length === 0 && <p className="history-empty">Aun no hay documentos aqui.</p>}
+        {loadedOnce && !loading && !error && items.length === 0 && (
+          <div className="history-empty">
+            <GuillocheSeal seed={tab} size={88} />
+            <p>
+              {tab === 'invoices'
+                ? 'Aún no hay facturas. Inicia la llamada y dile al agente qué vendiste.'
+                : 'Aún no hay notas crédito. Aparecen aquí cuando anulas una factura validada.'}
+            </p>
+          </div>
+        )}
 
-      {tab === 'invoices'
-        ? invoices.map((invoice) => (
-            <DocumentCard
-              key={invoice.reference_code}
-              title={`Factura ${invoice.number || invoice.reference_code}`}
-              meta={`${invoice.customer?.names || invoice.customer?.company || 'Cliente'} · Ref: ${invoice.reference_code}`}
-              total={invoice.totals?.total}
-              cufe={invoice.cufe}
-              municipalityCode={invoice.customer?.municipality_code}
-              isValidated={invoice.is_validated}
-              publicUrl={invoice.public_url || invoice.links?.public_url}
-              onView={() => setOpenInvoice(invoice)}
-              deleting={deletingCode === invoice.reference_code}
-              onDelete={() => removeInvoice(invoice.reference_code)}
-            />
-          ))
-        : creditNotes.map((note) => (
-            <DocumentCard
-              key={note.reference_code}
-              title={`Nota crédito ${note.number || note.reference_code}`}
-              meta={`Factura ref. ${note.bill_number} · Ref: ${note.reference_code}`}
-              total={note.totals?.total}
-              cufe={note.cufe}
-              isValidated={note.is_validated}
-              deleting={deletingCode === note.reference_code}
-              onDelete={() => removeCreditNote(note.reference_code)}
-            />
-          ))}
+        {tab === 'invoices'
+          ? invoices.map((invoice) => (
+              <DocumentCard
+                key={invoice.reference_code}
+                kind="invoice"
+                label="Factura"
+                folio={invoice.number || invoice.reference_code}
+                customer={invoice.customer?.names || invoice.customer?.company || 'Cliente'}
+                reference={invoice.reference_code}
+                total={invoice.totals?.total}
+                cufe={invoice.cufe}
+                municipalityCode={invoice.customer?.municipality_code}
+                isValidated={invoice.is_validated}
+                publicUrl={invoice.public_url || invoice.links?.public_url}
+                paymentUrl={invoice.payment_url}
+                onView={() => setOpenInvoice(invoice)}
+                deleting={deletingCode === invoice.reference_code}
+                onDelete={() => removeInvoice(invoice.reference_code)}
+              />
+            ))
+          : creditNotes.map((note) => (
+              <DocumentCard
+                key={note.reference_code}
+                kind="credit-note"
+                label="Nota crédito"
+                folio={note.number || note.reference_code}
+                customer={note.bill_number ? `Factura ref. ${note.bill_number}` : null}
+                reference={note.reference_code}
+                total={note.totals?.total}
+                cufe={note.cufe}
+                isValidated={note.is_validated}
+                deleting={deletingCode === note.reference_code}
+                onDelete={() => removeCreditNote(note.reference_code)}
+              />
+            ))}
+      </div>
 
       <InvoiceViewer invoice={openInvoice} onClose={() => setOpenInvoice(null)} />
     </div>
