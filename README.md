@@ -190,6 +190,7 @@ npm run dev            # http://localhost:5173
 | `MOCK_MODE` | `true` (por defecto): simulador local, sin credenciales. `false`: APIs reales (sandbox o producción según las URLs). |
 | `FACTUS_BASE_URL`, `FACTUS_CLIENT_ID`, `FACTUS_CLIENT_SECRET`, `FACTUS_USERNAME`, `FACTUS_PASSWORD` | Credenciales OAuth2 de Factus. |
 | `FACTUS_BILL_RANGE_ID`, `FACTUS_CREDIT_NOTE_RANGE_ID` | Opcionales. Vacíos = rango automático. |
+| `FACTUS_PAY_MOCK_MODE` | Opcional. `false`: los cobros van al sandbox real de Factus Pay aunque las facturas sean simuladas. Vacío = sigue a `MOCK_MODE`. |
 | `FACTUS_PAY_BASE_URL`, `FACTUS_PAY_EMAIL`, `FACTUS_PAY_PASSWORD` | Opcionales. Sin ellas se emite igual, sin cobro (`collection.status = disabled`). |
 | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | Opcionales. Con clave, conversación libre con Claude; sin ella, asistente guiado. |
 | `FRONTEND_ORIGIN` | Orígenes permitidos por CORS (lista separada por comas o `*`). |
@@ -207,6 +208,7 @@ npm run dev            # http://localhost:5173
 | `GET` | `/api/health` | Modo (simulado/real), motor del agente y si Factus Pay está configurado. |
 | `GET` | `/api/numbering-ranges` | Rangos activos y el elegido para facturas y notas crédito. |
 | `GET` | `/api/catalogs`, `/api/catalogs/municipalities` | Catálogos DIAN y DANE usados. |
+| `GET` | `/api/collections` | Recaudos de Factus Pay (filtros: `status`, `reference_code`, `page`). |
 | `GET` | `/api/invoices` | Lista (filtros: `reference_code`, `number`, `identification`, `names`, `prefix`, `status`, `page`). |
 | `POST` | `/api/invoices` | Emite factura + cobro. |
 | `GET` | `/api/invoices/:identifier` | Detalle por número DIAN o referencia. |

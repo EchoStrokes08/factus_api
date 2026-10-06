@@ -1,3 +1,6 @@
 node_modules/
 .env
 *.log
+
+# Estado del simulador (MOCK_MODE)
+.data/

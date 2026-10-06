@@ -18,7 +18,7 @@ import { logger } from '../utils/logger.js';
 const money = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 
 export function isEnabled() {
-  return env.mockMode || Boolean(env.factusPay.email && env.factusPay.password);
+  return env.factusPay.mockMode || Boolean(env.factusPay.email && env.factusPay.password);
 }
 
 export async function openCollection(referenceCode, amount) {
@@ -47,6 +47,26 @@ export async function getCollection(referenceCode) {
     if (error.statusCode === 404) return unavailable('none', 'Esta factura no tiene un cobro abierto en Factus Pay.');
     throw error;
   }
+}
+
+const COLLECTION_STATUSES = ['started', 'ready', 'paid', 'failed', 'rejected'];
+
+/** Recaudos de la cuenta, tal como los muestra el panel de Factus Pay. */
+export async function listCollections({ status, reference_code, page } = {}) {
+  if (!isEnabled()) return { items: [], pagination: null, enabled: false };
+  const params = {};
+  if (COLLECTION_STATUSES.includes(status)) params.status = status;
+  if (reference_code) params.reference_code = String(reference_code).slice(0, 100);
+  if (Number.isInteger(Number(page)) && Number(page) > 0) params.page = Number(page);
+
+  const response = await withFactusPayToken((token) => collectionsApi.list(token, params));
+  const rows = Array.isArray(response?.data) ? response.data : [];
+  const meta = response?.meta ?? null;
+  return {
+    items: rows.map(toCollectionView),
+    pagination: meta && { current_page: meta.current_page, last_page: meta.last_page, per_page: meta.per_page, total: meta.total },
+    enabled: true,
+  };
 }
 
 function unavailable(status, reason) {

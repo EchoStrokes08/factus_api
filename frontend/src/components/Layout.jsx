@@ -28,6 +28,9 @@ export function Layout({ children, engine, system }) {
                 {mockMode ? 'Modo simulado' : 'Factus sandbox'}
               </li>
             )}
+            {mockMode && system?.health?.factusPay && system.health.factusPayMockMode === false && (
+              <li className="status-chip is-live">Factus Pay sandbox</li>
+            )}
             <RangeChip ranges={system?.ranges} error={system?.rangesError} />
           </ul>
         </header>

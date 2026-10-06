@@ -17,4 +17,4 @@ const mock = {
   login: async () => sandbox.payLogin(),
 };
 
-export const { login } = env.mockMode ? mock : real;
+export const { login } = env.factusPay.mockMode ? mock : real;

@@ -6,6 +6,7 @@ import { creditNoteRoutes } from './creditNoteRoutes.js';
 import { numberingRangeRoutes } from './numberingRangeRoutes.js';
 import { agentRoutes } from './agentRoutes.js';
 import { catalogRoutes } from './catalogRoutes.js';
+import { collectionRoutes } from './collectionRoutes.js';
 
 export const apiRouter = Router();
 
@@ -15,10 +16,12 @@ apiRouter.get('/health', (req, res) => {
     mockMode: env.mockMode,
     agentEngine: env.anthropic.apiKey ? 'claude' : 'fallback',
     factusPay: isFactusPayEnabled(),
+    factusPayMockMode: env.factusPay.mockMode,
   });
 });
 
 apiRouter.use('/catalogs', catalogRoutes);
+apiRouter.use('/collections', collectionRoutes);
 apiRouter.use('/numbering-ranges', numberingRangeRoutes);
 apiRouter.use('/invoices', invoiceRoutes);
 apiRouter.use('/credit-notes', creditNoteRoutes);

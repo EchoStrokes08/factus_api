@@ -22,6 +22,9 @@ export const env = {
   },
 
   factusPay: {
+    // Independiente de MOCK_MODE: permite facturas simuladas con cobros reales
+    // en el sandbox de Factus Pay. Si no se define, sigue a MOCK_MODE.
+    mockMode: bool(process.env.FACTUS_PAY_MOCK_MODE, bool(process.env.MOCK_MODE, true)),
     baseUrl: process.env.FACTUS_PAY_BASE_URL || 'https://pay-api-sandbox.factus.com.co',
     email: process.env.FACTUS_PAY_EMAIL || '',
     password: process.env.FACTUS_PAY_PASSWORD || '',

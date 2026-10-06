@@ -17,11 +17,15 @@ const real = {
 
   /** GET /v1/collections/:referenceCode - estado y QR (data URI base64). */
   get: (token, referenceCode) => http.get(`/v1/collections/${segment(referenceCode)}`, { token }),
+
+  /** GET /v1/collections - acepta status, reference_code y page; no incluye el QR. */
+  list: (token, params) => http.get('/v1/collections', { token, params }),
 };
 
 const mock = {
   create: async (token, body) => sandbox.createCollection(body),
   get: async (token, referenceCode) => sandbox.getCollection(referenceCode),
+  list: async (token, params) => sandbox.listCollections(params),
 };
 
-export const { create, get } = env.mockMode ? mock : real;
+export const { create, get, list } = env.factusPay.mockMode ? mock : real;
