@@ -22,8 +22,10 @@ export function unwrapPage(response) {
 /** Extrae el documento de una respuesta de detalle/creacion. */
 export function unwrapDocument(response) {
   const body = response?.data ?? response ?? {};
-  if (body.bill || body.credit_note) {
-    const core = body.bill || body.credit_note;
+  // Solo se desanida si el documento no viene en la raiz: la nota credito
+  // real es plana y su `bill` es la referencia a la factura que corrige.
+  if (!body.number && (body.bill || body.credit_note)) {
+    const core = body.credit_note || body.bill;
     return { ...body, ...core, customer: body.customer ?? core.customer, items: body.items ?? core.items };
   }
   return body;
@@ -50,7 +52,10 @@ export function toInvoiceView(raw = {}) {
           resolution_number: raw.numbering_range.resolution_number ?? null,
         }
       : null,
-    voided_by: creditNoteNumbers(raw.credit_notes, { onlyCancellations: true }),
+    // El detalle real trae las notas en related_notes.credit_notes.
+    voided_by: creditNoteNumbers(raw.credit_notes ?? raw.related_notes?.credit_notes, { onlyCancellations: true }),
+    // Todas sus notas, con o sin concepto: el frontend las cruza con el listado de notas.
+    credit_note_numbers: creditNoteNumbers(raw.credit_notes ?? raw.related_notes?.credit_notes, { onlyCancellations: false }),
     public_url: httpsUrl(raw.public_url ?? raw.links?.public_url),
     dian_qr: httpsUrl(raw.qr ?? raw.links?.qr),
   };
@@ -133,6 +138,19 @@ function toCustomerView(raw) {
     identification: customer.identification ?? raw.identification ?? null,
     email: customer.email ?? raw.email ?? null,
     municipality_code: codeOf(customer.municipality) ?? customer.municipality_code ?? null,
+    // Codigos DIAN del adquiriente: la nota credito debe repetirlos (Factus v2
+    // exige `customer` aunque la nota referencie la factura).
+    names: customer.names ?? null,
+    company: customer.company ?? null,
+    dv: customer.dv ?? null,
+    phone: customer.phone ?? null,
+    identification_document_code:
+      codeOf(customer.identification_document) ?? customer.identification_document_code ?? null,
+    legal_organization_code: codeOf(customer.legal_organization) ?? customer.legal_organization_code ?? null,
+    tribute_code: codeOf(customer.tribute) ?? customer.tribute_code ?? null,
+    responsibilities: Array.isArray(customer.responsibilities)
+      ? customer.responsibilities.map((item) => codeOf(item)).filter(Boolean)
+      : null,
   };
 }
 
@@ -144,7 +162,8 @@ function toItemView(item) {
     quantity: toNumber(item.quantity) ?? 0,
     price: toNumber(item.price) ?? 0,
     discount_rate: toNumber(item.discount_rate) ?? 0,
-    tax_rate: toNumber(tax.rate ?? item.tax_rate) ?? 0,
+    // El detalle de Factus anida la tarifa: taxes[0].rates[0].rate.
+    tax_rate: toNumber(tax.rate ?? tax.rates?.[0]?.rate ?? item.tax_rate) ?? 0,
     tax_code: codeOf(tax.code ?? tax.tribute ?? item.tribute) ?? '01',
     is_excluded: truthy(tax.is_excluded ?? item.is_excluded),
     unit_measure_code: codeOf(item.unit_measure) ?? item.unit_measure_code ?? null,
@@ -165,10 +184,12 @@ function toTotals(raw, items) {
   };
 }
 
+// Factus real lista las notas de una factura sin su concepto ({ id, number }):
+// sin concepto no se puede afirmar que sea una anulacion, asi que no cuenta.
 function creditNoteNumbers(notes, { onlyCancellations }) {
   if (!Array.isArray(notes)) return [];
   return notes
-    .filter((note) => !onlyCancellations || String(codeOf(note.correction_concept_code ?? note.correction_concept) ?? '2') === '2')
+    .filter((note) => !onlyCancellations || String(codeOf(note.correction_concept_code ?? note.correction_concept) ?? '') === '2')
     .map((note) => note.number)
     .filter(Boolean);
 }

@@ -1,8 +1,9 @@
 import * as creditNotesApi from '../api/factusCreditNotesClient.js';
+import * as billsApi from '../api/factusBillsClient.js';
 import { withFactusToken } from './tokenManager.js';
 import { resolveRangeId } from './numberingRangeService.js';
 import { buildCustomer, buildItems, buildPaymentDetails, computeTotal, generateReferenceCode } from './documentBuilder.js';
-import { toCreditNoteView, unwrapDocument, unwrapPage } from './mappers/factusMapper.js';
+import { toCreditNoteView, toInvoiceView, unwrapDocument, unwrapPage } from './mappers/factusMapper.js';
 import {
   CREDIT_NOTE_CORRECTION_CONCEPT,
   CREDIT_NOTE_CUSTOMIZATION_WITH_BILL,
@@ -10,6 +11,7 @@ import {
 import { env } from '../config/env.js';
 import { ApiError } from '../utils/ApiError.js';
 import { logger } from '../utils/logger.js';
+import { mapWithLimit } from '../utils/mapWithLimit.js';
 
 /**
  * Notas credito electronicas (POST /v2/credit-notes/validate). Dos usos:
@@ -23,17 +25,25 @@ export async function createCreditNote(draft) {
   if (!draft.bill_number) throw badRequest('La nota crédito necesita el número de la factura que corrige');
 
   const items = buildItems(draft.items);
+  const total = computeTotal(items);
+  const invoice = await fetchInvoice(draft.bill_number);
+  if (invoice.totals.total != null && total > invoice.totals.total) {
+    throw badRequest(
+      `La nota crédito (${money.format(total)}) no puede superar el total de la factura ${invoice.number} (${money.format(invoice.totals.total)}).`,
+    );
+  }
+
   const payload = {
     reference_code: draft.reference_code || generateReferenceCode('NC'),
     correction_concept_code: draft.correction_concept_code || CREDIT_NOTE_CORRECTION_CONCEPT.DEVOLUCION_PARCIAL,
     customization_id: CREDIT_NOTE_CUSTOMIZATION_WITH_BILL,
-    bill_number: draft.bill_number,
+    bill_number: invoice.number,
     numbering_range_id: await resolveRangeId('creditNote'),
     observation: draft.observation,
-    // El cliente es opcional: si no se envia, Factus hereda el de la factura.
-    customer: draft.customer?.identification ? buildCustomer(draft.customer) : undefined,
+    // Factus v2 exige `customer`: por defecto, el adquiriente de la factura.
+    customer: draft.customer?.identification ? buildCustomer(draft.customer) : customerOf(invoice),
     items,
-    payment_details: buildPaymentDetails({ ...draft.payment, amount: computeTotal(items) }),
+    payment_details: buildPaymentDetails({ ...draft.payment, amount: total }),
   };
 
   return issue(payload);
@@ -55,11 +65,32 @@ export async function createCancellationNote(invoice) {
     bill_number: invoice.number,
     numbering_range_id: await resolveRangeId('creditNote'),
     observation: `Anulación total de la factura electrónica ${invoice.number}`,
+    customer: customerOf(invoice),
     items,
     payment_details: buildPaymentDetails({ amount: invoice.totals.total || computeTotal(items) }),
   };
 
   return issue(payload);
+}
+
+/** Adquiriente de la factura (vista de factusMapper) en el formato del payload. */
+function customerOf(invoice) {
+  const customer = invoice.customer ?? {};
+  return buildCustomer({
+    ...customer,
+    names: customer.names || (customer.company ? undefined : customer.name),
+    responsibilities: customer.responsibilities?.length ? customer.responsibilities : undefined,
+  });
+}
+
+async function fetchInvoice(number) {
+  try {
+    const response = await withFactusToken((token) => billsApi.get(token, number));
+    return toInvoiceView(unwrapDocument(response));
+  } catch (error) {
+    if (error.statusCode === 404) throw badRequest(`No existe la factura ${number} en Factus`);
+    throw error;
+  }
 }
 
 export function cancellationReference(invoice) {
@@ -84,10 +115,29 @@ export async function listCreditNotes(params = {}) {
   return { items: rows.map((row) => withMode(toCreditNoteView(row))), pagination };
 }
 
+const MAX_NUMBERS = 50;
+
+/**
+ * Notas credito por numero exacto (filter[number]). Con la cuenta sandbox
+ * compartida, el listado general mezcla las de otros equipos: el frontend
+ * pide solo las que cuelgan de sus propias facturas.
+ */
+export async function listCreditNotesByNumbers(numbers = []) {
+  const unique = [...new Set(numbers.map((number) => String(number).trim()).filter(Boolean))].slice(0, MAX_NUMBERS);
+  const found = await mapWithLimit(unique, 5, async (number) => {
+    const { items } = await listCreditNotes({ 'filter[number]': number });
+    return items.find((item) => item.number === number) ?? null;
+  });
+  return { items: found.filter(Boolean), pagination: null };
+}
+
 async function findCreditNote(referenceCode) {
   const { items } = await listCreditNotes({ 'filter[reference_code]': referenceCode });
   return items[0] ?? null;
 }
+
+/** La nota de anulacion de `invoice`, si ya se emitio (referencia ANUL-...). */
+export const findCancellationNote = (invoice) => findCreditNote(cancellationReference(invoice));
 
 async function issue(payload) {
   const response = await withFactusToken((token) => creditNotesApi.createAndValidate(token, payload));
@@ -108,5 +158,6 @@ async function issue(payload) {
   return creditNote;
 }
 
+const money = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const withMode = (view) => ({ ...view, simulated: env.mockMode });
 const badRequest = (message) => new ApiError(message, { source: 'creditNoteService', statusCode: 400 });

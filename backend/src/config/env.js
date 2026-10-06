@@ -1,21 +1,41 @@
 import 'dotenv/config';
 
 function bool(value, fallback) {
-  if (value === undefined) return fallback;
+  if (value === undefined || value === '') return fallback;
   return value === 'true' || value === '1';
 }
+
+/**
+ * Credenciales de SANDBOX incluidas a proposito para que la app funcione
+ * sin configurar nada (local y Vercel). Cualquier variable de entorno las
+ * reemplaza. No poner aqui credenciales de produccion: este archivo es publico.
+ */
+const SANDBOX_DEFAULTS = {
+  factus: {
+    clientId: 'REMOVIDO',
+    clientSecret: 'REMOVIDO',
+    username: 'REMOVIDO',
+    password: 'REMOVIDO',
+  },
+  factusPay: {
+    email: 'REMOVIDO',
+    password: 'REMOVIDO',
+  },
+};
+
+const mockMode = bool(process.env.MOCK_MODE, false);
 
 export const env = {
   port: Number(process.env.PORT) || 4000,
   frontendOrigin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
-  mockMode: bool(process.env.MOCK_MODE, true),
+  mockMode,
 
   factus: {
     baseUrl: process.env.FACTUS_BASE_URL || 'https://api-sandbox.factus.com.co',
-    clientId: process.env.FACTUS_CLIENT_ID || '',
-    clientSecret: process.env.FACTUS_CLIENT_SECRET || '',
-    username: process.env.FACTUS_USERNAME || '',
-    password: process.env.FACTUS_PASSWORD || '',
+    clientId: process.env.FACTUS_CLIENT_ID || SANDBOX_DEFAULTS.factus.clientId,
+    clientSecret: process.env.FACTUS_CLIENT_SECRET || SANDBOX_DEFAULTS.factus.clientSecret,
+    username: process.env.FACTUS_USERNAME || SANDBOX_DEFAULTS.factus.username,
+    password: process.env.FACTUS_PASSWORD || SANDBOX_DEFAULTS.factus.password,
     // Opcionales: vacios = el rango se resuelve con GET /v2/numbering-ranges.
     billRangeId: process.env.FACTUS_BILL_RANGE_ID || '',
     creditNoteRangeId: process.env.FACTUS_CREDIT_NOTE_RANGE_ID || '',
@@ -24,10 +44,10 @@ export const env = {
   factusPay: {
     // Independiente de MOCK_MODE: permite facturas simuladas con cobros reales
     // en el sandbox de Factus Pay. Si no se define, sigue a MOCK_MODE.
-    mockMode: bool(process.env.FACTUS_PAY_MOCK_MODE, bool(process.env.MOCK_MODE, true)),
+    mockMode: bool(process.env.FACTUS_PAY_MOCK_MODE, mockMode),
     baseUrl: process.env.FACTUS_PAY_BASE_URL || 'https://pay-api-sandbox.factus.com.co',
-    email: process.env.FACTUS_PAY_EMAIL || '',
-    password: process.env.FACTUS_PAY_PASSWORD || '',
+    email: process.env.FACTUS_PAY_EMAIL || SANDBOX_DEFAULTS.factusPay.email,
+    password: process.env.FACTUS_PAY_PASSWORD || SANDBOX_DEFAULTS.factusPay.password,
   },
 
   anthropic: {

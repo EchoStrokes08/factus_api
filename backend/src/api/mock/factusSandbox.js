@@ -1,18 +1,8 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { ApiError } from '../../utils/ApiError.js';
-import { logger } from '../../utils/logger.js';
 
 /**
- * Simulador de Factus v2 y Factus Pay v1 (MOCK_MODE=true).
- *
- * El estado se guarda en disco (MOCK_DATA_FILE, por defecto
- * backend/.data/factus-sandbox.json): con FACTUS_PAY_MOCK_MODE=false los
- * cobros viven en el sandbox real de Factus Pay, y si las facturas simuladas
- * se perdieran al reiniciar, quedarian recaudos huerfanos y la numeracion
- * volveria a empezar con folios repetidos. Si el disco no es escribible
- * (serverless), sigue funcionando solo en memoria.
+ * Simulador en memoria de Factus v2 y Factus Pay v1 (MOCK_MODE=true). No guarda
+ * nada en disco: al reiniciar el backend empieza vacio.
  *
  * No es un "devuelve success siempre": reproduce las reglas que importan
  * para que el resto del backend se comporte igual que contra el sandbox real:
@@ -92,51 +82,6 @@ const bills = new Map(); // number -> detalle
 const creditNotes = new Map(); // number -> detalle
 const collections = new Map(); // reference_code -> recaudo
 
-/* ----------------------------------------------------------- persistencia */
-
-// En Vercel solo /tmp es escribible, y dura lo que viva la instancia.
-const DATA_FILE =
-  process.env.MOCK_DATA_FILE ||
-  (process.env.VERCEL
-    ? '/tmp/factus-sandbox.json'
-    : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../.data/factus-sandbox.json'));
-let persistenceWarned = false;
-
-function restore() {
-  let saved;
-  try {
-    saved = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-  } catch (error) {
-    if (error.code !== 'ENOENT') logger.warn(SOURCE, `No se pudo leer ${DATA_FILE}; se empieza vacío`, error.message);
-    return;
-  }
-  for (const range of numberingRanges) {
-    const current = saved.rangeCurrents?.[range.id];
-    if (Number.isInteger(current) && current > range.current) range.current = current;
-  }
-  for (const bill of saved.bills ?? []) bills.set(bill.number, bill);
-  for (const note of saved.creditNotes ?? []) creditNotes.set(note.number, note);
-  for (const record of saved.collections ?? []) collections.set(record.reference_code, record);
-}
-
-function persist() {
-  try {
-    fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
-    const snapshot = {
-      rangeCurrents: Object.fromEntries(numberingRanges.map((range) => [range.id, range.current])),
-      bills: [...bills.values()],
-      creditNotes: [...creditNotes.values()],
-      collections: [...collections.values()],
-    };
-    fs.writeFileSync(DATA_FILE, JSON.stringify(snapshot, null, 2));
-  } catch (error) {
-    if (!persistenceWarned) logger.warn(SOURCE, 'El simulador no puede guardar en disco; los datos viven solo en memoria', error.message);
-    persistenceWarned = true;
-  }
-}
-
-restore();
-
 /* ------------------------------------------------------------------ auth */
 
 export function login() {
@@ -191,7 +136,6 @@ export function createBill(payload) {
   };
 
   bills.set(number, bill);
-  persist();
   return envelope(`Documento con el código de referencia ${payload.reference_code} registrado y validado con éxito`, bill);
 }
 
@@ -229,7 +173,6 @@ export function destroyBill(referenceCode) {
     });
   }
   bills.delete(bill.number);
-  persist();
   return { status: 'OK', message: 'Documento eliminado con éxito' };
 }
 
@@ -270,7 +213,6 @@ export function createCreditNote(payload) {
 
   creditNotes.set(number, note);
   bill.credit_notes.push({ number, reference_code: note.reference_code, correction_concept_code: note.correction_concept_code });
-  persist();
   return envelope(`Documento con el código de referencia ${payload.reference_code} registrado y validado con éxito`, note);
 }
 
@@ -302,7 +244,6 @@ export function destroyCreditNote(referenceCode) {
     });
   }
   creditNotes.delete(note.number);
-  persist();
   return { status: 'OK', message: 'Documento eliminado con éxito' };
 }
 
@@ -320,7 +261,6 @@ export function createCollection({ reference_code, amount }) {
 
   const record = { reference_code, amount, created_at: new Date().toISOString(), createdAtMs: Date.now() };
   collections.set(reference_code, record);
-  persist();
   return { status: 'success', message: 'Recaudo creado correctamente', data: collectionState(record) };
 }
 

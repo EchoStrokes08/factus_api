@@ -123,11 +123,18 @@
 
 /* ---------- Busqueda y avisos ---------- */
 
+.history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 1.75rem 0;
+}
+
 .history-search {
+  flex: 1 1 12rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 1rem 1.75rem 0;
   padding: 0 0.75rem;
   min-height: 38px;
   color: var(--ink-faint);
@@ -154,6 +161,28 @@
 
 .history-search input::placeholder {
   color: var(--ink-faint);
+}
+
+.history-status select {
+  min-height: 38px;
+  padding: 0 0.75rem;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--ink);
+  background: var(--paper-raised);
+  border: 1px solid var(--paper-rule-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.history-status select:focus-visible {
+  outline: 2px solid var(--intaglio-700);
+  outline-offset: 1px;
+}
+
+.history-more {
+  align-self: center;
+  justify-content: center;
 }
 
 .history-notice-slot:empty {
@@ -549,7 +578,7 @@
     padding: 0 1.25rem;
   }
 
-  .history-search,
+  .history-filters,
   .history-notice {
     margin-left: 1.25rem;
     margin-right: 1.25rem;

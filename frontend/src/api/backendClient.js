@@ -50,13 +50,24 @@ export const backendClient = {
     request('/agent/message', { method: 'POST', body: { sessionId, text, state } }),
   endAgentSession: (sessionId) => request(`/agent/session/${segment(sessionId)}`, { method: 'DELETE' }),
 
-  listInvoices: () => request('/invoices'),
+  /** Solo las facturas de esta app: la cuenta sandbox de Factus es compartida. */
+  listOwnInvoices: ({ page } = {}) => request(`/invoices?scope=mine${page > 1 ? `&page=${page}` : ''}`),
   getInvoice: (identifier, { signal } = {}) => request(`/invoices/${segment(identifier)}`, { signal }),
-  getCollection: (identifier, { signal } = {}) => request(`/invoices/${segment(identifier)}/collection`, { signal }),
   /** Elimina la factura si no esta validada; si lo esta, la anula con nota credito. */
   cancelInvoice: (identifier) => request(`/invoices/${segment(identifier)}`, { method: 'DELETE' }),
   invoicePdfUrl: (identifier) => apiUrl(`/invoices/${segment(identifier)}/pdf`),
 
-  listCreditNotes: () => request('/credit-notes'),
+  listCreditNotesByNumbers: (numbers) =>
+    request(`/credit-notes?numbers=${numbers.map((number) => encodeURIComponent(number)).join(',')}`),
   deleteCreditNote: (referenceCode) => request(`/credit-notes/${segment(referenceCode)}`, { method: 'DELETE' }),
+
+  // Recaudos: se consultan directamente en Factus Pay a traves del backend.
+  listCollections: ({ status, page } = {}) => {
+    const query = new URLSearchParams();
+    if (status) query.set('status', status);
+    if (page > 1) query.set('page', String(page));
+    const search = query.toString();
+    return request(`/collections${search ? `?${search}` : ''}`);
+  },
+  getCollection: (referenceCode, { signal } = {}) => request(`/collections/${segment(referenceCode)}`, { signal }),
 };

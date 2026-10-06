@@ -187,11 +187,11 @@ npm run dev            # http://localhost:5173
 
 | Variable | Uso |
 |---|---|
-| `MOCK_MODE` | `true` (por defecto): simulador local, sin credenciales. `false`: APIs reales (sandbox o producción según las URLs). |
-| `FACTUS_BASE_URL`, `FACTUS_CLIENT_ID`, `FACTUS_CLIENT_SECRET`, `FACTUS_USERNAME`, `FACTUS_PASSWORD` | Credenciales OAuth2 de Factus. |
+| `MOCK_MODE` | `false` (por defecto): APIs reales de Factus y Factus Pay (sandbox o producción según las URLs). `true`: simulador local. |
+| `FACTUS_BASE_URL`, `FACTUS_CLIENT_ID`, `FACTUS_CLIENT_SECRET`, `FACTUS_USERNAME`, `FACTUS_PASSWORD` | Credenciales OAuth2 de Factus. Vacías = las de sandbox incluidas en `backend/src/config/env.js`, así la app funciona sin configurar nada. |
 | `FACTUS_BILL_RANGE_ID`, `FACTUS_CREDIT_NOTE_RANGE_ID` | Opcionales. Vacíos = rango automático. |
 | `FACTUS_PAY_MOCK_MODE` | Opcional. `false`: los cobros van al sandbox real de Factus Pay aunque las facturas sean simuladas. Vacío = sigue a `MOCK_MODE`. |
-| `FACTUS_PAY_BASE_URL`, `FACTUS_PAY_EMAIL`, `FACTUS_PAY_PASSWORD` | Opcionales. Sin ellas se emite igual, sin cobro (`collection.status = disabled`). |
+| `FACTUS_PAY_BASE_URL`, `FACTUS_PAY_EMAIL`, `FACTUS_PAY_PASSWORD` | Credenciales de Factus Pay. Vacías = las de sandbox incluidas en `env.js`. |
 | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | Opcionales. Con clave, conversación libre con Claude; sin ella, asistente guiado. |
 | `FRONTEND_ORIGIN` | Orígenes permitidos por CORS (lista separada por comas o `*`). |
 
@@ -209,13 +209,14 @@ npm run dev            # http://localhost:5173
 | `GET` | `/api/numbering-ranges` | Rangos activos y el elegido para facturas y notas crédito. |
 | `GET` | `/api/catalogs`, `/api/catalogs/municipalities` | Catálogos DIAN y DANE usados. |
 | `GET` | `/api/collections` | Recaudos de Factus Pay (filtros: `status`, `reference_code`, `page`). |
-| `GET` | `/api/invoices` | Lista (filtros: `reference_code`, `number`, `identification`, `names`, `prefix`, `status`, `page`). |
+| `GET` | `/api/collections/:referenceCode` | Un recaudo de Factus Pay con su QR de pago. |
+| `GET` | `/api/invoices` | Lista de Factus (filtros: `reference_code`, `number`, `identification`, `names`, `prefix`, `status`, `page`). Con `scope=mine`, solo las facturas de esta app: la cuenta sandbox es compartida entre equipos, así que se indexan por los recaudos propios de Factus Pay (las de menos de $10.000 no abren recaudo y no aparecen). |
 | `POST` | `/api/invoices` | Emite factura + cobro. |
 | `GET` | `/api/invoices/:identifier` | Detalle por número DIAN o referencia. |
 | `GET` | `/api/invoices/:identifier/collection` | Estado del cobro y QR. |
 | `GET` | `/api/invoices/:identifier/pdf` | PDF oficial (solo modo real). |
 | `DELETE` | `/api/invoices/:identifier` | **Elimina o anula** según la regla de la sección 4. |
-| `GET` | `/api/credit-notes` | Lista de notas crédito. |
+| `GET` | `/api/credit-notes` | Lista de notas crédito. Con `numbers=CRTE765,…`, solo esas notas. |
 | `POST` | `/api/credit-notes` | Nota crédito parcial. |
 | `DELETE` | `/api/credit-notes/:referenceCode` | Elimina una nota no validada (409 si ya lo está). |
 | `POST` | `/api/agent/message` | Turno de conversación. |

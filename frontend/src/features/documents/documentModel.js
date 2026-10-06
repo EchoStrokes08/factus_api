@@ -65,21 +65,47 @@ export function normalizeCreditNote(raw = {}) {
   };
 }
 
+/** Estados de un recaudo en Factus Pay, con el tono de etiqueta que les corresponde. */
+export const COLLECTION_STATUS = {
+  started: { label: 'Iniciado', tone: 'draft' },
+  ready: { label: 'Listo para pagar', tone: 'mock' },
+  paid: { label: 'Pagado', tone: 'valid' },
+  failed: { label: 'Fallido', tone: 'voided' },
+  rejected: { label: 'Rechazado', tone: 'voided' },
+};
+
+export function normalizeCollection(raw = {}) {
+  const status = COLLECTION_STATUS[raw.status] ?? { label: raw.status || 'Desconocido', tone: 'draft' };
+  return {
+    referenceCode: raw.reference_code,
+    amount: toNumber(raw.amount),
+    status: raw.status,
+    statusLabel: status.label,
+    tone: status.tone,
+    createdAt: raw.created_at ? new Date(raw.created_at) : null,
+    qr: raw.qr ?? null,
+  };
+}
+
 /**
  * Factus no siempre adjunta las notas credito al listado de facturas: se
  * cruzan con el listado de notas (concepto 2 = anulacion) para que una
  * factura anulada se vea anulada aunque el detalle no lo diga.
  */
 export function markVoidedInvoices(invoices, creditNotes) {
-  const cancellations = new Map();
+  const byBill = new Map();
+  const cancellationNumbers = new Set();
   for (const note of creditNotes) {
-    if (String(note.concept_code) === '2' && note.bill_number) cancellations.set(note.bill_number, note.number);
+    if (String(note.concept_code) !== '2') continue;
+    cancellationNumbers.add(note.number);
+    if (note.bill_number) byBill.set(note.bill_number, note.number);
   }
-  return invoices.map((invoice) =>
-    invoice.voided_by?.length || !cancellations.has(invoice.number)
-      ? invoice
-      : { ...invoice, voided_by: [cancellations.get(invoice.number)] },
-  );
+  return invoices.map((invoice) => {
+    if (invoice.voided_by?.length) return invoice;
+    // Factus real lista las notas de la factura sin concepto: se cruzan por numero.
+    const voidedBy = byBill.get(invoice.number) ?? invoice.credit_note_numbers?.find((n) => cancellationNumbers.has(n));
+    return voidedBy ? { ...invoice, voided_by: [voidedBy] } : invoice;
+  });
 }
 
 function toNumber(value) {

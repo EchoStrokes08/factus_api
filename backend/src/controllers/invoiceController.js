@@ -12,8 +12,13 @@ export async function cancel(req, res) {
   res.json({ status: 'success', data: result });
 }
 
+/** ?scope=mine: solo las facturas de esta app (indexadas por Factus Pay). */
 export async function list(req, res) {
-  const result = await invoiceService.listInvoices(toFactusFilters(req.query));
+  const filters = toFactusFilters(req.query);
+  const result =
+    req.query.scope === 'mine'
+      ? await invoiceService.listOwnInvoices({ page: filters.page })
+      : await invoiceService.listInvoices(filters);
   res.json({ status: 'success', data: result });
 }
 

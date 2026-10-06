@@ -1,13 +1,14 @@
 import * as billsApi from '../api/factusBillsClient.js';
 import { withFactusToken } from './tokenManager.js';
 import { invalidateRangeCache, resolveRangeId } from './numberingRangeService.js';
-import { createCancellationNote } from './creditNoteService.js';
+import { createCancellationNote, findCancellationNote } from './creditNoteService.js';
 import * as collectionService from './collectionService.js';
 import { buildCustomer, buildItems, buildPaymentDetails, computeTotal, generateReferenceCode } from './documentBuilder.js';
 import { toInvoiceView, unwrapDocument, unwrapPage } from './mappers/factusMapper.js';
 import { env } from '../config/env.js';
 import { ApiError } from '../utils/ApiError.js';
 import { logger } from '../utils/logger.js';
+import { mapWithLimit } from '../utils/mapWithLimit.js';
 
 /**
  * Logica de negocio de facturas: que forma tiene el documento, en que orden
@@ -65,6 +66,34 @@ export async function listInvoices(params = {}) {
 }
 
 /**
+ * Solo las facturas emitidas por esta app. La cuenta sandbox de Factus es
+ * compartida entre equipos y no filtra por dueño; Factus Pay en cambio es
+ * propia, y cada recaudo lleva la misma referencia que su factura, asi que
+ * sirve de indice: se pagina sobre los recaudos y cada factura se trae de
+ * Factus por su referencia exacta.
+ * Limite: una factura por debajo del minimo de Factus Pay ($10.000) no abre
+ * recaudo y no aparece aqui.
+ */
+export async function listOwnInvoices({ page } = {}) {
+  const index = await collectionService.listCollections({ page });
+  if (!index.enabled) return listInvoices(page ? { page } : {});
+
+  const collections = [...index.items].sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
+  const invoices = await mapWithLimit(collections, 5, async (collection) => {
+    try {
+      const { items } = await listInvoices({ 'filter[reference_code]': collection.reference_code });
+      const invoice = items.find((item) => item.reference_code === collection.reference_code);
+      return invoice ? { ...invoice, collection } : null;
+    } catch (error) {
+      logger.warn('invoiceService', `No se pudo traer la factura del recaudo ${collection.reference_code}`, error.message);
+      return null;
+    }
+  });
+
+  return { items: invoices.filter(Boolean), pagination: index.pagination };
+}
+
+/**
  * Detalle completo de una factura a partir de su codigo de referencia o de
  * su numero (SETP990001042). Factus solo expone el detalle por numero, asi
  * que una referencia se traduce primero con el filtro del listado.
@@ -100,12 +129,15 @@ export async function getInvoice(identifier) {
  */
 export async function cancelInvoice(identifier) {
   const invoice = await getInvoice(identifier);
+  // Factus real no dice el concepto de las notas de una factura: la anulacion
+  // se reconoce por su referencia deterministica ANUL-<referencia>.
+  const voidedBy = invoice.voided_by[0] ?? (await findCancellationNote(invoice))?.number;
 
-  if (invoice.voided_by.length) {
+  if (voidedBy) {
     return {
       outcome: 'already_voided',
-      message: `La factura ${invoice.number} ya estaba anulada con la nota crédito ${invoice.voided_by[0]}.`,
-      invoice,
+      message: `La factura ${invoice.number} ya estaba anulada con la nota crédito ${voidedBy}.`,
+      invoice: { ...invoice, voided_by: [voidedBy] },
       creditNote: null,
       warning: null,
     };

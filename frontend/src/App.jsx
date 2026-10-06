@@ -29,7 +29,12 @@ export default function App() {
   return (
     <Layout engine={engine ?? system.health?.agentEngine} system={system}>
       <CallScreen onActivity={notifyActivity} onEngine={setEngine} />
-      <HistoryPanel refreshSignal={refreshSignal} onActivity={notifyActivity} />
+      <HistoryPanel
+        refreshSignal={refreshSignal}
+        onActivity={notifyActivity}
+        factusMock={system.health?.mockMode}
+        factusPayMock={system.health?.factusPayMockMode}
+      />
     </Layout>
   );
 }

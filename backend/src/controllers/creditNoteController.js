@@ -11,7 +11,10 @@ export async function remove(req, res) {
   res.json({ status: 'success', data: result });
 }
 
+/** ?numbers=CRTE765,CRTE766 trae solo esas notas; sin el, el listado de Factus. */
 export async function list(req, res) {
-  const result = await creditNoteService.listCreditNotes(toFactusFilters(req.query));
+  const result = req.query.numbers
+    ? await creditNoteService.listCreditNotesByNumbers(String(req.query.numbers).split(','))
+    : await creditNoteService.listCreditNotes(toFactusFilters(req.query));
   res.json({ status: 'success', data: result });
 }
