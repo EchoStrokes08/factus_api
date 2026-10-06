@@ -1,145 +1,162 @@
-# Factus Voz: Arquitectura del Sistema y Matriz de Evaluación
+# Factus Voz · Arquitectura y evaluación
 
-Este documento presenta la arquitectura de software de **Factus Voz**, su justificación técnica y el desglose de cumplimiento frente a los **Criterios de Evaluación** oficiales del evento/hackathon.
-
----
-
-## 1. Matriz de Cumplimiento de Criterios de Evaluación
-
-A continuación se detalla cómo el proyecto aborda y maximiza cada uno de los rubros de evaluación:
-
-```
-┌───────────────────────────────────────┬───────┬────────────────────────────────────────────────────────┐
-│ Criterio de Evaluación                │ Pts % │ Estrategia y Cumplimiento en Factus Voz                │
-├───────────────────────────────────────┼───────┼────────────────────────────────────────────────────────┤
-│ 1. Integración de APIs                │  25%  │ • Consumo completo de Factus API v2 y Factus Pay v1.   │
-│                                       │       │ • Flujo OAuth2 y TokenManager con auto-refresh.        │
-│                                       │       │ • Validación DIAN síncrona (CUFE, QR, XML UBL 2.1).    │
-│                                       │       │ • Orquestación automática Factura -> Factus Pay.       │
-│                                       │       │ • Integración con Catálogos Oficiales DANE (DIVIPOLA). │
-├───────────────────────────────────────┼───────┼────────────────────────────────────────────────────────┤
-│ 2. Funcionamiento                     │  25%  │ • Ciclo de vida completo: Creación, consulta y         │
-│                                       │       │   eliminación/anulación de facturas y notas crédito.   │
-│                                       │       │ • Modo Híbrido: MOCK_MODE para testing sin saldo y     │
-│                                       │       │   modo Producción/Sandbox real con Factus.             │
-│                                       │       │ • Manejo de errores resiliente con ApiError y fallback.│
-├───────────────────────────────────────┼───────┼────────────────────────────────────────────────────────┤
-│ 3. Calidad del Código y Arquitectura  │  15%  │ • Arquitectura en capas desacopladas (Clean Arch).     │
-│                                       │       │ • La capa de red (api/) no conoce reglas de negocio.   │
-│                                       │       │ • DocumentBuilder aísla los cambios de esquema DIAN.   │
-│                                       │       │ • Colección Postman completa y documentación OpenAPI.  │
-├───────────────────────────────────────┼───────┼────────────────────────────────────────────────────────┤
-│ 4. Innovación                         │  15%  │ • Agente de Voz con IA (Speech-to-Text -> LLM -> TTS). │
-│                                       │       │ • Facturación conversacional "hands-free" sin teclear. │
-│                                       │       │ • Resolución semántica de municipios DANE DIVIPOLA.    │
-│                                       │       │ • Fallback algorítmico guiado si no hay API key de IA. │
-├───────────────────────────────────────┼───────┼────────────────────────────────────────────────────────┤
-│ 5. Experiencia de Usuario (UX)        │  10%  │ • Interfaz moderna estilo llamada con animaciones.     │
-│                                       │       │ • Feedback sonoro y transcripción en tiempo real.      │
-│                                       │       │ • Panel de historial con badges DIAN y botón de pago.  │
-│                                       │       │ • Accesibilidad: soporte alternativo por teclado.      │
-├───────────────────────────────────────┼───────┼────────────────────────────────────────────────────────┤
-│ 6. Presentación y Material            │  10%  │ • Pitch estructurado de 3 minutos para los jurados.    │
-│                                       │       │ • Documentación exhaustiva en /docs (flujos, APIs).    │
-│                                       │       │ • Diagramas Mermaid de secuencia y arquitectura.       │
-│                                       │       │ • Colección Postman lista para pruebas de evaluación.  │
-└───────────────────────────────────────┴───────┴────────────────────────────────────────────────────────┘
-```
+Cómo está construido Factus Voz, por qué se tomó cada decisión y cómo responde a cada criterio de evaluación. Para el contrato HTTP ver [`API_REFERENCE.md`](API_REFERENCE.md); para actores y flujos fiscales, [`STAKEHOLDERS_Y_FLUJOS.md`](STAKEHOLDERS_Y_FLUJOS.md).
 
 ---
 
-## 2. Diagrama de Arquitectura de Capas (Clean Architecture)
+## 1. Criterios de evaluación
 
-El sistema sigue una separación estricta de responsabilidades en 5 niveles:
+### 1.1 Integración de APIs
+
+- **13 operaciones** de Factus v2 y Factus Pay v1 en uso real (no de adorno): OAuth2 password/refresh, rangos de numeración, emitir-validar, listar con filtros, detalle, PDF, destruir, notas crédito (emitir, listar, destruir), login Factus Pay, crear recaudo y consultar recaudo.
+- **Encadenamiento con sentido de negocio:** emitir = resolver rango → validar ante la DIAN → abrir cobro; anular = buscar por referencia → detalle → decidir destruir o nota crédito concepto 2 → revisar si el cobro ya se pagó.
+- **Resiliencia:** reintento ante 401 con token renovado, *single-flight* de tokens, idempotencia por `reference_code`, timeout uniforme, errores con la regla DIAN que falló, credenciales mal configuradas reportadas con la variable a revisar.
+- **Respeto a las reglas de cada API:** límites de monto de Factus Pay, `due_date` obligatoria en ventas a crédito, `customization_id: 20` en notas que referencian factura, rango obligatorio con varios rangos activos.
+
+### 1.2 Funcionamiento
+
+- Ciclo de vida completo por voz y por panel: emitir, consultar, cobrar, anular, eliminar, notas parciales.
+- **Nada falla en silencio ni a medias:** si el cobro falla, la factura existe y se dice por qué no hay cobro; si una herramienta del agente falla, el agente lo explica; si la clave de IA es inválida, la llamada continúa con el asistente guiado.
+- **Simulador fiel** (`MOCK_MODE`): reproduce el 409 al destruir validadas, la numeración por rangos, las referencias idempotentes y el QR asíncrono, de modo que lo que funciona en demo funciona igual contra Factus.
+- Prueba de punta a punta del backend: emitir, cobro `started → ready`, `skipped` por monto bajo, anular, anular de nuevo (`already_voided`), nota parcial, 400/404/409/501 y JSON inválido. Interfaz verificada en navegador: anular desde el panel, flujo de llamada por texto, visor con sello y cobro.
+
+### 1.3 Calidad del código
+
+- **Capas con dependencias en un solo sentido:** `routes → controllers → services → api`. El agente entra por `tools`, igual que un controlador: voz y panel aplican las mismas reglas sin duplicarlas.
+- **Alta cohesión:** un servicio por concepto (facturas, notas, rangos, cobros, tokens); un cliente HTTP por recurso de Factus; un único `factusMapper` con funciones puras para toda la variación de formas de respuesta.
+- **Bajo acoplamiento:** ningún archivo fuera de `api/` conoce axios ni URLs; el modo simulado se elige en un solo punto por cliente; el frontend solo conoce `backendClient` y vistas normalizadas.
+- **Errores tipados** (`ApiError` con `source` y `statusCode`) y un `errorHandler` central que nunca filtra trazas internas al cliente.
+
+### 1.4 Innovación
+
+- **Facturación conversacional real:** el modelo usa herramientas que escriben un borrador estructurado; la IA nunca "recuerda" datos fiscales, los guarda.
+- **Anulación legal automática por voz:** *"anula la factura SETP…"* produce la nota crédito correcta, replicando la factura desde Factus.
+- **Numeración DIAN sin configuración:** el rango se descubre y se valida (vigencia, folios libres) en cada arranque de caché.
+- **Cobro con QR vivo** dentro del documento: la factura y su cobro son una sola pieza.
+- **Diseño de "imprenta de seguridad":** la interfaz trata la factura como un documento de valor (sellos guilloche deterministas por CUFE, folios seriales, sello ANULADA).
+
+### 1.5 Presentación y experiencia de usuario
+
+- Estado de la llamada legible desde el otro lado de la sala; estado del sistema (motor, modo, rango y folios libres) siempre visible.
+- Confirmaciones que nombran la consecuencia exacta y solo aparecen cuando la acción es posible.
+- Búsqueda en el historial, avisos que se retiran solos, carga progresiva del detalle, accesibilidad de teclado y lectores de pantalla.
+
+---
+
+## 2. Diagrama de componentes
 
 ```mermaid
 graph TB
-    subgraph Frontend["Frontend (Vite + React)"]
-        UI_Call["Pantalla de Llamada (STT / TTS)"]
-        UI_History["Panel de Facturas & Notas Crédito"]
-        Client["backendClient.js (Proxy Único)"]
+    subgraph Frontend["Frontend (React + Vite)"]
+        Call["CallScreen<br/>STT · TTS · transcripción"]
+        Docs["HistoryPanel · DocumentCard"]
+        Viewer["InvoiceViewer · CollectionPanel"]
+        Client["backendClient<br/>(único punto de red)"]
     end
 
-    subgraph Backend_Gateway["Backend Gateway (Express ESM)"]
-        Routes["Rutas Express (/api/invoices, /credit-notes, /agent)"]
-        Controllers["Controllers (Manejo HTTP req/res)"]
-        
-        subgraph Core_Services["Capa de Negocio (Services)"]
-            InvService["invoiceService"]
-            CreditService["creditNoteService"]
-            DocBuilder["documentBuilder (Esquemas DIAN/DANE)"]
-            TokenMgr["tokenManager (Gestión de tokens)"]
+    subgraph Backend["Backend (Express, ESM)"]
+        Routes["routes / controllers"]
+        subgraph Agent["agent/"]
+            AgentSvc["agentService<br/>Claude tool use"]
+            Fallback["fallbackAgent<br/>máquina de estados"]
+            Tools["tools"]
         end
-        
-        subgraph Agent_Layer["Capa de Inteligencia Conversacional"]
-            AgentServ["agentService (Claude 3.5 Sonnet)"]
-            Fallback["fallbackAgent (Modo guiado sin IA externa)"]
-            Tools["tools.js (Puente Agente -> Services)"]
+        subgraph Services["services/"]
+            Inv["invoiceService"]
+            CN["creditNoteService"]
+            Ranges["numberingRangeService"]
+            Coll["collectionService"]
+            Builder["documentBuilder"]
+            Mapper["mappers/factusMapper"]
+            Tokens["tokenManager"]
         end
-        
-        subgraph API_Clients["Capa de Infraestructura y Red (api/)"]
-            FactusBills["factusBillsClient (/v2/bills)"]
-            FactusCN["factusCreditNotesClient (/v2/credit-notes)"]
-            FactusPay["factusPayCollectionsClient (/v1/collections)"]
-            MockStore["mockData (Simulador en memoria)"]
+        subgraph Api["api/"]
+            Http["httpClientFactory"]
+            Bills["factusBillsClient"]
+            Notes["factusCreditNotesClient"]
+            NR["factusNumberingRangesClient"]
+            Pay["factusPayCollectionsClient"]
+            Auth["factusAuthClient · factusPayAuthClient"]
+            Sandbox["mock/factusSandbox"]
         end
     end
 
-    subgraph External_Cloud["Servicios Externos y Autoridades"]
-        DIAN_Cloud["DIAN (Validación Previa UBL 2.1)"]
-        DANE_Cloud["DANE (Codificación DIVIPOLA)"]
-        Factus_Cloud["Factus API Sandbox"]
-        FactusPay_Cloud["Factus Pay Sandbox"]
+    subgraph External["Servicios externos"]
+        Factus["Factus API v2"]
+        DIAN["DIAN"]
+        FPay["Factus Pay v1"]
+        Claude["Anthropic API"]
     end
 
-    UI_Call --> Client
-    UI_History --> Client
+    Call --> Client
+    Docs --> Client
+    Viewer --> Client
     Client --> Routes
-    Routes --> Controllers
-    Controllers --> InvService
-    Controllers --> CreditService
-    Controllers --> AgentServ
-    AgentServ --> Tools
+    Routes --> Inv
+    Routes --> CN
+    Routes --> Ranges
+    Routes --> AgentSvc
+    AgentSvc --> Tools
+    AgentSvc -. clave inválida .-> Fallback
     Fallback --> Tools
-    Tools --> InvService
-    Tools --> CreditService
-    InvService --> DocBuilder
-    InvService --> TokenMgr
-    InvService --> FactusBills
-    InvService --> FactusPay
-    CreditService --> FactusCN
-    
-    FactusBills -. MOCK_MODE=true .-> MockStore
-    FactusBills -. MOCK_MODE=false .-> Factus_Cloud
-    FactusPay -. MOCK_MODE=false .-> FactusPay_Cloud
-    Factus_Cloud --> DIAN_Cloud
-    DocBuilder -. Valida códigos .-> DANE_Cloud
+    Tools --> Inv
+    Tools --> CN
+    Inv --> Ranges
+    Inv --> CN
+    Inv --> Coll
+    Inv --> Builder
+    CN --> Builder
+    Inv --> Mapper
+    CN --> Mapper
+    Inv --> Bills
+    CN --> Notes
+    Ranges --> NR
+    Coll --> Pay
+    Inv --> Tokens
+    Tokens --> Auth
+    Bills --> Http
+    Notes --> Http
+    NR --> Http
+    Pay --> Http
+    Http -- MOCK_MODE=false --> Factus
+    Http -- MOCK_MODE=false --> FPay
+    Bills -. MOCK_MODE=true .-> Sandbox
+    Factus --> DIAN
+    AgentSvc --> Claude
 ```
 
 ---
 
-## 3. Guion de Pitch y Demostración para Jurados (3 Minutos)
+## 3. Decisiones de diseño
 
-Para lograr la máxima calificación en **Presentación (10%)** y **Innovación (15%)**, se sugiere seguir este guion exacto de exposición:
+| Decisión | Alternativa descartada | Por qué |
+|---|---|---|
+| `DELETE /invoices/:id` decide entre destruir y anular | Dos endpoints y que el usuario elija | El usuario no debe conocer el estado DIAN para hacer lo correcto; la ley decide, no el usuario. |
+| Nota de anulación construida desde `GET /v2/bills/:number` | Reusar el borrador o datos del cliente | Solo el detalle de Factus garantiza que la nota replica exactamente lo facturado. |
+| Referencia `ANUL-<ref>` determinística | Referencia aleatoria | Factus devuelve el documento existente ante una referencia repetida: anular es idempotente sin base de datos propia. |
+| Referencia de factura fijada en el borrador antes de emitir | Generarla en cada intento | Un timeout seguido de reintento no duplica la factura. |
+| Rango por `GET /v2/numbering-ranges` + caché de 5 min | Pedir el id por variable de entorno | Funciona en cualquier cuenta sin configuración y detecta rangos vencidos o agotados; la variable queda como escape. |
+| El cobro nunca tumba la factura | Fallar toda la operación | Para cuando se cobra, el documento ya existe ante la DIAN; un 500 haría creer lo contrario. |
+| Mapeador de respuestas puro | Leer campos de Factus en cada componente | Un solo lugar absorbe las variaciones de forma; el frontend no cambia si Factus cambia. |
+| Estado de la conversación viaja con cada mensaje | Sesiones en memoria del servidor | Despliegue serverless sin almacenamiento compartido. |
+| Errores de herramientas como `tool_result` con `is_error` | Lanzar y cortar la llamada | Claude puede explicarle al usuario qué faltó y seguir la conversación. |
+| Ciudad desconocida se omite | Usar Bogotá por defecto | Un código DANE falso en un documento fiscal es peor que omitir un campo opcional. |
 
-### Minuto 0:00 - 0:45 | El Problema y la Oportunidad
-> *"Buenas tardes, jurados. En Colombia, emitir una factura electrónica ante la DIAN y registrar los códigos del DANE para un comerciante o profesional suele ser un proceso engorroso: formularios con más de 20 campos, códigos DIVIPOLA confusos y la molestia de tener que pasar a otra pantalla para cobrar.
-> Les presentamos **Factus Voz**: la primera solución que convierte la facturación electrónica y el recaudo digital en una simple llamada telefónica asistida por inteligencia artificial."*
+---
 
-### Minuto 0:45 - 2:00 | Demostración en Vivo (Live Demo)
-1. **Inicio de llamada:** El presentador toca el botón 📞 de llamada.
-2. **Interacción por voz:**
-   - *Presentador:* "Hola, necesito hacer una factura a nombre de Carlos Rodríguez, cédula 901234567 en Medellín, por 2 asesorías tributarias a 150 mil pesos cada una".
-   - *Agente responde (por voz):* Transcribe, procesa, mapea "Medellín" al código DANE `05001`, calcula el IVA al 19% ($57,000) y el total ($357,000). Pide confirmación de pago.
-   - *Presentador:* "De contado, por transferencia".
-   - *Agente:* "Confirmado. Generando factura electrónica y recaudo... ¡Listo! Factura SETP9900001001 validada por la DIAN con CUFE generado y link de pago activo en Factus Pay".
-3. **Comprobación en Pantalla:** Aparece inmediatamente en el panel derecho la tarjeta con el CUFE, enlace de validación DIAN y enlace de pago de Factus Pay.
-4. **Demostración del dilema legal (Eliminar vs Anular):**
-   - El presentador muestra cómo el sistema distingue técnicamente: si el documento fuera borrador, se elimina físicamente con `DELETE /v2/bills/destroy`; como ya está validado por la DIAN, el sistema protege al usuario orientándolo a emitir la Nota Crédito correspondiente según la norma DIAN.
+## 4. Guion de demostración (3 minutos)
 
-### Minuto 2:00 - 3:00 | Arquitectura, Stakeholders y Cierre
-> *"Bajo el capó, Factus Voz implementa una arquitectura limpia y desacoplada:
-> 1. Integra las dos APIs de la suite: **Factus API v2** para timbrado DIAN y **Factus Pay** para recaudo inmediato.
-> 2. Articula al **DANE** mediante el estándar DIVIPOLA de codificación municipal y a la **DIAN** con el estándar UBL 2.1.
-> 3. Pone al **Comprador** en el centro del flujo, entregándole su factura con CUFE y su QR de pago en un solo toque.
-> Factus Voz no es solo un dashboard más; es el futuro de la facturación conversacional en Colombia. Muchas gracias."*
+**0:00 – 0:30 · El problema.** *"Facturar electrónicamente en Colombia es un formulario de veinte campos con códigos DIAN y DANE. Y si te equivocas, no puedes borrar la factura: la ley exige anularla con una nota crédito. Factus Voz convierte todo eso en una llamada."*
+
+**0:30 – 1:40 · Emitir por voz.**
+1. Señalar el encabezado: modo, motor y **rango DIAN con folios libres**, leído en vivo de `GET /v2/numbering-ranges`.
+2. Llamar y decir: *"Factura para María Gómez, cédula 52123456, en Bogotá, un diseño de logo de 350 mil, paga por transferencia."*
+3. El agente lee el resumen; responder *"sí"*. Aparece la ficha **SETP… · $416.500 · Validada DIAN**.
+4. Abrirla: CUFE, resolución, código DANE `11001` y el **cobro de Factus Pay** pasando de "generando" a listo.
+
+**1:40 – 2:30 · Anular por voz.**
+1. Decir: *"Anula la factura SETP…"*. El agente confirma la consecuencia.
+2. Responder *"sí"*: *"Quedó anulada ante la DIAN con la nota crédito NC…"*. La ficha muestra el sello rojo **ANULADA** y la nota aparece en su pestaña con concepto *Anulación de factura*.
+3. Mencionar: repetir la orden no genera otra nota (idempotencia), y una nota validada ni siquiera ofrece "eliminar".
+
+**2:30 – 3:00 · Cierre técnico.** *"Trece operaciones de Factus y Factus Pay encadenadas con reglas reales: rango automático, anulación legal, cobro que nunca tumba la factura y una arquitectura donde la voz y el panel comparten exactamente la misma lógica."*

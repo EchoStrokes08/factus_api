@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, ArrowUp, Phone, PhoneOff } from 'lucide-react';
 import { backendClient } from '../../api/backendClient.js';
 import { GuillocheSeal, LiveRosette } from '../../components/Guilloche.jsx';
-import { InvoiceViewer, normalizeInvoice } from '../documents/InvoiceViewer.jsx';
+import { InvoiceViewer } from '../documents/InvoiceViewer.jsx';
+import { formatMoney, normalizeInvoice } from '../documents/documentModel.js';
 import { useSpeechRecognition } from './useSpeechRecognition.js';
 import { useSpeechSynthesis } from './useSpeechSynthesis.js';
 import './CallScreen.css';
@@ -13,7 +14,6 @@ function createSessionId() {
     : `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-const money = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
 const clock = new Intl.DateTimeFormat('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
 
 const SPEAKER = { agent: 'Agente', user: 'Tú', error: 'Error' };
@@ -21,7 +21,7 @@ const SPEAKER = { agent: 'Agente', user: 'Tú', error: 'Error' };
 const STEPS = [
   { title: 'Llama', text: 'Activa el micrófono con un toque.' },
   { title: 'Conversa', text: 'Dile al agente el cliente, los productos y cómo paga.' },
-  { title: 'Recibe', text: 'La factura llega validada ante la DIAN, con su CUFE.' },
+  { title: 'Recibe', text: 'La factura llega validada por la DIAN, con CUFE y su cobro en Factus Pay.' },
 ];
 
 /**
@@ -103,7 +103,8 @@ export function CallScreen({ onActivity, onEngine }) {
     try {
       const data = await sendToAgent(text);
       setMessages((prev) => [...prev, ...agentMessages(data)]);
-      onActivity?.();
+      // Solo un documento emitido o anulado cambia el historial y el rango.
+      if (data.document) onActivity?.();
       listenAfterSpeaking(data.reply);
     } catch (error) {
       setMessages((prev) => [...prev, { role: 'error', text: error.message, at: new Date() }]);
@@ -288,20 +289,22 @@ export function CallScreen({ onActivity, onEngine }) {
 function InvoiceSlip({ invoice, onOpen }) {
   const view = normalizeInvoice(invoice);
   const folio = view.number || view.referenceCode;
+  const status = view.isVoided
+    ? `Anulada con ${view.voidedBy[0]}`
+    : [view.isValidated ? 'Validada DIAN' : 'Sin validar', view.isSimulated && 'Simulada'].filter(Boolean).join(' · ');
   return (
-    <button type="button" className="invoice-slip" onClick={onOpen}>
+    <button type="button" className={`invoice-slip ${view.isVoided ? 'is-voided' : ''}`} onClick={onOpen}>
       <GuillocheSeal seed={view.cufe || folio} size={56} className="invoice-slip-seal" />
       <span className="invoice-slip-body">
         <span className="invoice-slip-title">
           Factura <span className="serial invoice-slip-folio">{folio}</span>
         </span>
         <span className="invoice-slip-meta">
-          {view.customerName}
-          {view.isMock ? ' · Simulada' : view.isValidated ? ' · Validada DIAN' : ''}
+          {view.customerName} · {status}
         </span>
       </span>
       <span className="invoice-slip-total">
-        <strong>{money.format(view.total)}</strong>
+        <strong>{formatMoney(view.total)}</strong>
         <span className="invoice-slip-cta">
           Ver factura <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />
         </span>

@@ -377,6 +377,12 @@
   }
 }
 
+.invoice-slip.is-voided .invoice-slip-total strong {
+  text-decoration: line-through;
+  text-decoration-color: var(--serial);
+  text-decoration-thickness: 2px;
+}
+
 .invoice-slip:hover {
   transform: translateY(-2px);
   box-shadow: 0 16px 30px -14px rgba(0, 0, 0, 0.75);

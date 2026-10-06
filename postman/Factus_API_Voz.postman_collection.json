@@ -13,7 +13,17 @@
     },
     {
       "key": "lastInvoiceReference",
-      "value": "FACT-POSTMAN-001",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lastInvoiceNumber",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lastCreditNoteReference",
+      "value": "",
       "type": "string"
     }
   ],
@@ -22,14 +32,31 @@
       "name": "0. Salud y Diagnóstico",
       "item": [
         {
-          "name": "Health Check (Estado y Mock Mode)",
+          "name": "Health Check (modo, motor del agente, Factus Pay)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["health"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
             }
           }
         }
@@ -45,10 +72,48 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/catalogs/municipalities",
-              "host": ["{{baseUrl}}"],
-              "path": ["catalogs", "municipalities"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "catalogs",
+                "municipalities"
+              ]
             },
             "description": "Obtiene la lista de municipios principales con su codificación oficial de 5 dígitos del DANE (DIVIPOLA) exigida por Factus y la DIAN."
+          }
+        },
+        {
+          "name": "Rangos de numeración activos (GET /v2/numbering-ranges)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Hay rango de facturas', function () {",
+                  "    pm.expect(pm.response.json().data.bill).to.not.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/numbering-ranges",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "numbering-ranges"
+              ]
+            },
+            "description": "Consulta Factus y devuelve el rango activo y vigente que el backend usará para facturas (bill) y notas crédito (creditNote)."
           }
         }
       ]
@@ -57,21 +122,24 @@
       "name": "2. Facturas Electrónicas (Invoices)",
       "item": [
         {
-          "name": "Crear Factura y Recaudo Factus Pay",
+          "name": "Emitir factura + recaudo Factus Pay",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status code is 201', function () {",
+                  "pm.test('Status 201', function () {",
                   "    pm.response.to.have.status(201);",
                   "});",
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData.data && jsonData.data.invoice) {",
-                  "    pm.collectionVariables.set('lastInvoiceReference', jsonData.data.invoice.data.reference_code);",
-                  "}"
-                ],
-                "type": "text/javascript"
+                  "var data = pm.response.json().data;",
+                  "pm.test('Factura validada con CUFE', function () {",
+                  "    pm.expect(data.invoice.is_validated).to.be.true;",
+                  "    pm.expect(data.invoice.cufe).to.be.a(\"string\");",
+                  "});",
+                  "pm.collectionVariables.set('lastInvoiceReference', data.invoice.reference_code);",
+                  "pm.collectionVariables.set('lastInvoiceNumber', data.invoice.number);"
+                ]
               }
             }
           ],
@@ -85,49 +153,192 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"reference_code\": \"FACT-POSTMAN-001\",\n  \"observation\": \"Factura de prueba creada desde Postman\",\n  \"customer\": {\n    \"identification\": \"901234567\",\n    \"dv\": \"3\",\n    \"company\": \"Innovacion Colombia S.A.S.\",\n    \"names\": \"Carlos Rodriguez\",\n    \"email\": \"carlos@innovacion.co\",\n    \"phone\": \"3101234567\",\n    \"address\": \"Carrera 7 # 71-21\",\n    \"municipality_code\": \"11001\"\n  },\n  \"items\": [\n    {\n      \"name\": \"Suscripción Anual Facturación Cloud\",\n      \"quantity\": 1,\n      \"price\": 180000,\n      \"tax_rate\": 19\n    },\n    {\n      \"name\": \"Soporte Técnico Especializado\",\n      \"quantity\": 2,\n      \"price\": 45000,\n      \"tax_rate\": 19\n    }\n  ],\n  \"payment\": {\n    \"payment_form\": \"1\",\n    \"payment_method_code\": \"10\"\n  }\n}"
+              "raw": "{\n  \"reference_code\": \"FACT-POSTMAN-{{$timestamp}}\",\n  \"observation\": \"Factura de prueba creada desde Postman\",\n  \"customer\": {\n    \"identification\": \"901234567\",\n    \"dv\": \"3\",\n    \"company\": \"Innovacion Colombia S.A.S.\",\n    \"names\": \"Carlos Rodriguez\",\n    \"email\": \"carlos@innovacion.co\",\n    \"phone\": \"3101234567\",\n    \"address\": \"Carrera 7 # 71-21\",\n    \"municipality_code\": \"11001\"\n  },\n  \"items\": [\n    {\n      \"name\": \"Suscripción Anual Facturación Cloud\",\n      \"quantity\": 1,\n      \"price\": 180000,\n      \"tax_rate\": 19\n    },\n    {\n      \"name\": \"Soporte Técnico Especializado\",\n      \"quantity\": 2,\n      \"price\": 45000,\n      \"tax_rate\": 19\n    }\n  ],\n  \"payment\": {\n    \"payment_form\": \"1\",\n    \"payment_method_code\": \"10\"\n  }\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/invoices",
-              "host": ["{{baseUrl}}"],
-              "path": ["invoices"]
-            }
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "invoices"
+              ]
+            },
+            "description": "numbering_range_id se resuelve solo con GET /v2/numbering-ranges. El cobro nunca tumba la factura: collection.status puede ser started, skipped, disabled o error."
           }
         },
         {
-          "name": "Listar Facturas Electrónicas",
+          "name": "Listar facturas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/invoices",
-              "host": ["{{baseUrl}}"],
-              "path": ["invoices"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "invoices"
+              ]
             }
           }
         },
         {
-          "name": "Consultar Detalle de Factura (con CUFE y Pay URL)",
+          "name": "Detalle por número DIAN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/invoices/{{lastInvoiceNumber}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "invoices",
+                "{{lastInvoiceNumber}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Detalle por código de referencia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/invoices/{{lastInvoiceReference}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["invoices", "{{lastInvoiceReference}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "invoices",
+                "{{lastInvoiceReference}}"
+              ]
             }
           }
         },
         {
-          "name": "Eliminar Factura No Validada",
+          "name": "Estado del cobro en Factus Pay (QR)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/invoices/{{lastInvoiceReference}}/collection",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "invoices",
+                "{{lastInvoiceReference}}",
+                "collection"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PDF oficial DIAN (solo MOCK_MODE=false)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/invoices/{{lastInvoiceNumber}}/pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "invoices",
+                "{{lastInvoiceNumber}}",
+                "pdf"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Eliminar o anular factura",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Validada => anulada con nota crédito', function () {",
+                  "    var data = pm.response.json().data;",
+                  "    pm.expect(['voided', 'deleted', 'already_voided']).to.include(data.outcome);",
+                  "    if (data.outcome === 'voided') pm.expect(data.creditNote.concept_code).to.eql('2');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/invoices/{{lastInvoiceReference}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["invoices", "{{lastInvoiceReference}}"]
-            }
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "invoices",
+                "{{lastInvoiceReference}}"
+              ]
+            },
+            "description": "Sin CUFE: DELETE /v2/bills/destroy/reference. Con CUFE: nota crédito de anulación (concepto 2) con referencia ANUL-<referencia>; repetir la petición no crea una segunda nota."
           }
         }
       ]
@@ -136,7 +347,21 @@
       "name": "3. Notas Crédito (Credit Notes)",
       "item": [
         {
-          "name": "Crear Nota Crédito (Anulación o Corrección)",
+          "name": "Nota crédito parcial (devolución)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.collectionVariables.set('lastCreditNoteReference', pm.response.json().data.reference_code);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -147,37 +372,65 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"reference_code\": \"NC-POSTMAN-001\",\n  \"bill_number\": \"SETP9900001001\",\n  \"correction_concept_code\": \"2\",\n  \"items\": [\n    {\n      \"name\": \"Suscripción Anual Facturación Cloud\",\n      \"quantity\": 1,\n      \"price\": 180000,\n      \"tax_rate\": 19\n    }\n  ]\n}"
+              "raw": "{\n  \"bill_number\": \"{{lastInvoiceNumber}}\",\n  \"correction_concept_code\": \"1\",\n  \"items\": [\n    {\n      \"name\": \"Suscripción Anual Facturación Cloud\",\n      \"quantity\": 1,\n      \"price\": 180000,\n      \"tax_rate\": 19\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/credit-notes",
-              "host": ["{{baseUrl}}"],
-              "path": ["credit-notes"]
-            }
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "credit-notes"
+              ]
+            },
+            "description": "Para anular una factura completa usa DELETE /invoices/:identifier. Conceptos: 1 devolución, 3 descuento, 4 ajuste de precio."
           }
         },
         {
-          "name": "Listar Notas Crédito",
+          "name": "Listar notas crédito",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/credit-notes",
-              "host": ["{{baseUrl}}"],
-              "path": ["credit-notes"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "credit-notes"
+              ]
             }
           }
         },
         {
-          "name": "Eliminar Nota Crédito No Validada",
+          "name": "Eliminar nota crédito no validada",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/credit-notes/NC-POSTMAN-001",
-              "host": ["{{baseUrl}}"],
-              "path": ["credit-notes", "NC-POSTMAN-001"]
-            }
+              "raw": "{{baseUrl}}/credit-notes/{{lastCreditNoteReference}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "credit-notes",
+                "{{lastCreditNoteReference}}"
+              ]
+            },
+            "description": "Una nota validada por la DIAN responde 409: la ley no permite borrarla."
           }
         }
       ]
@@ -201,8 +454,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/agent/message",
-              "host": ["{{baseUrl}}"],
-              "path": ["agent", "message"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "message"
+              ]
             }
           }
         },
@@ -213,8 +471,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/agent/session/postman-session-test",
-              "host": ["{{baseUrl}}"],
-              "path": ["agent", "session", "postman-session-test"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agent",
+                "session",
+                "postman-session-test"
+              ]
             }
           }
         }

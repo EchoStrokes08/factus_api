@@ -48,12 +48,30 @@ export const PAYMENT_METHOD = {
   TRANSFERENCIA: '42',
 };
 
+// Tabla DIAN de conceptos de correccion para notas credito (Anexo tecnico 1.9).
 export const CREDIT_NOTE_CORRECTION_CONCEPT = {
   DEVOLUCION_PARCIAL: '1',
   ANULACION: '2',
   DESCUENTO: '3',
-  OTROS: '6',
+  AJUSTE_PRECIO: '4',
+  DESCUENTO_PRONTO_PAGO: '5',
+  DESCUENTO_VOLUMEN: '6',
 };
+
+export const CREDIT_NOTE_CONCEPT_LABEL = {
+  1: 'Devolución parcial',
+  2: 'Anulación de factura',
+  3: 'Rebaja o descuento',
+  4: 'Ajuste de precio',
+  5: 'Descuento por pronto pago',
+  6: 'Descuento por volumen',
+};
+
+// customization_id 20 = nota credito que referencia una factura electronica.
+export const CREDIT_NOTE_CUSTOMIZATION_WITH_BILL = '20';
+
+// Limites que Factus Pay acepta para un recaudo (COP).
+export const COLLECTION_AMOUNT_LIMITS = { min: 10000, max: 12000000 };
 
 export const DEFAULT_MUNICIPALITY_CODE = '11001'; // Bogota D.C.
 export const DEFAULT_COUNTRY_CODE = 'CO';

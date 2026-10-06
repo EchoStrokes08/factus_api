@@ -1,50 +1,35 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { FileDown, Printer } from 'lucide-react';
+import { backendClient } from '../../api/backendClient.js';
 import { GuillocheSeal } from '../../components/Guilloche.jsx';
+import { CollectionPanel } from './CollectionPanel.jsx';
+import { formatMoney, normalizeInvoice } from './documentModel.js';
 import './InvoiceViewer.css';
 
-const money = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
-
 /**
- * Acepta tanto el resumen que devuelve el agente (customer.name) como la
- * factura cruda del listado (customer.names, items[].taxes) y la deja en
- * una sola forma para pintarla.
- */
-export function normalizeInvoice(raw = {}) {
-  const items = (raw.items || []).map((item) => {
-    const quantity = Number(item.quantity) || 0;
-    const price = Number(item.price) || 0;
-    const taxRate = Number(item.tax_rate ?? item.taxes?.[0]?.rate ?? 0);
-    return { name: item.name, quantity, price, taxRate, subtotal: quantity * price };
-  });
-
-  const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
-  const tax = items.reduce((sum, item) => sum + item.subtotal * (item.taxRate / 100), 0);
-
-  return {
-    number: raw.number,
-    referenceCode: raw.reference_code,
-    cufe: raw.cufe,
-    isValidated: Boolean(raw.is_validated),
-    isMock: String(raw.cufe || '').startsWith('mock-'),
-    createdAt: raw.created_at ? new Date(raw.created_at) : null,
-    customerName: raw.customer?.name || raw.customer?.names || raw.customer?.company || 'Cliente',
-    customerId: raw.customer?.identification,
-    items,
-    subtotal: Number(raw.totals?.gross_amount ?? subtotal),
-    tax: Number(raw.totals?.tax_amount ?? tax),
-    total: Number(raw.totals?.total ?? subtotal + tax),
-    publicUrl: raw.public_url ?? raw.links?.public_url ?? null,
-    paymentUrl: raw.payment_url ?? null,
-  };
-}
-
-/**
- * Muestra la factura dentro de la app. En modo simulado Factus no genera
- * una pagina publica, asi que este visor es la forma de "ver la factura";
- * si hay enlaces reales (Factus / Factus Pay) se ofrecen ademas.
+ * Muestra la factura dentro de la app como una hoja de papel de seguridad.
+ * Si llega una fila del listado (sin items), pide el detalle a Factus
+ * (GET /v2/bills/:number via backend). En modo real ofrece ademas el PDF
+ * oficial de la DIAN; en ambos modos se puede imprimir.
  */
 export function InvoiceViewer({ invoice, onClose }) {
   const dialogRef = useRef(null);
+  const [detail, setDetail] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+
+  useEffect(() => {
+    setDetail(invoice);
+    setLoadError(null);
+    const view = invoice ? normalizeInvoice(invoice) : null;
+    if (!view || view.hasDetail || !view.identifier) return undefined;
+
+    const controller = new AbortController();
+    backendClient
+      .getInvoice(view.identifier, { signal: controller.signal })
+      .then((full) => setDetail({ ...full, voided_by: full.voided_by?.length ? full.voided_by : invoice.voided_by }))
+      .catch((error) => error.name !== 'AbortError' && setLoadError(error.message));
+    return () => controller.abort();
+  }, [invoice]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -52,7 +37,8 @@ export function InvoiceViewer({ invoice, onClose }) {
   }, [invoice]);
 
   if (!invoice) return null;
-  const view = normalizeInvoice(invoice);
+  const view = normalizeInvoice(detail ?? invoice);
+  const loading = !view.hasDetail && !loadError;
 
   return (
     <dialog
@@ -62,9 +48,16 @@ export function InvoiceViewer({ invoice, onClose }) {
       onClick={(event) => event.target === dialogRef.current && dialogRef.current.close()}
       aria-labelledby="invoice-title"
     >
-      <article className="invoice-sheet">
+      <article className={`invoice-sheet ${view.isVoided ? 'is-voided' : ''}`} aria-busy={loading}>
+        {view.isVoided && (
+          <p className="invoice-stamp" aria-label={`Factura anulada con la nota crédito ${view.voidedBy[0]}`}>
+            Anulada
+            <span className="serial">{view.voidedBy[0]}</span>
+          </p>
+        )}
+
         <header className="invoice-head">
-          <GuillocheSeal seed={view.cufe || view.number || view.referenceCode} size={72} className="invoice-seal" />
+          <GuillocheSeal seed={view.cufe || view.identifier} size={72} className="invoice-seal" />
           <div className="invoice-head-text">
             <h2 id="invoice-title" className="invoice-doc-type">
               Factura electrónica de venta
@@ -77,52 +70,59 @@ export function InvoiceViewer({ invoice, onClose }) {
             )}
           </div>
           <div className="invoice-badges">
-            {view.isValidated && <span className="invoice-badge ok">Validada DIAN</span>}
-            {view.isMock && <span className="invoice-badge mock">Simulada</span>}
+            {view.isValidated ? (
+              <span className="invoice-badge ok">Validada DIAN</span>
+            ) : (
+              <span className="invoice-badge draft">Sin validar</span>
+            )}
+            {view.isSimulated && <span className="invoice-badge mock">Simulada</span>}
           </div>
         </header>
 
         <section className="invoice-party">
           <span className="invoice-label">Cliente</span>
           <strong>{view.customerName}</strong>
-          {view.customerId && <span className="invoice-muted">ID {view.customerId}</span>}
+          {(view.customerId || view.municipalityCode) && (
+            <span className="invoice-muted">
+              {view.customerId && <>ID <span className="serial">{view.customerId}</span></>}
+              {view.customerId && view.municipalityCode && ' · '}
+              {view.municipalityCode && <>Municipio DANE <span className="serial">{view.municipalityCode}</span></>}
+            </span>
+          )}
         </section>
 
-        <table className="invoice-items">
-          <thead>
-            <tr>
-              <th scope="col">Descripción</th>
-              <th scope="col" className="num">Cant.</th>
-              <th scope="col" className="num">Precio</th>
-              <th scope="col" className="num">IVA</th>
-              <th scope="col" className="num">Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            {view.items.map((item, index) => (
-              <tr key={index}>
-                <td>{item.name}</td>
-                <td className="num">{item.quantity}</td>
-                <td className="num">{money.format(item.price)}</td>
-                <td className="num">{item.taxRate}%</td>
-                <td className="num">{money.format(item.subtotal)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {loadError && (
+          <p className="invoice-error" role="alert">
+            No se pudo cargar el detalle desde Factus: {loadError}
+          </p>
+        )}
+
+        {loading ? (
+          <div className="invoice-loading" aria-label="Cargando detalle de la factura">
+            <span />
+            <span />
+            <span />
+          </div>
+        ) : (
+          view.hasDetail && <ItemsTable items={view.items} />
+        )}
 
         <dl className="invoice-totals">
-          <div>
-            <dt>Subtotal</dt>
-            <dd>{money.format(view.subtotal)}</dd>
-          </div>
-          <div>
-            <dt>IVA</dt>
-            <dd>{money.format(view.tax)}</dd>
-          </div>
+          {view.subtotal != null && (
+            <div>
+              <dt>Subtotal</dt>
+              <dd>{formatMoney(view.subtotal)}</dd>
+            </div>
+          )}
+          {view.tax != null && (
+            <div>
+              <dt>IVA</dt>
+              <dd>{formatMoney(view.tax)}</dd>
+            </div>
+          )}
           <div className="grand">
             <dt>Total</dt>
-            <dd>{money.format(view.total)}</dd>
+            <dd>{formatMoney(view.total)}</dd>
           </div>
         </dl>
 
@@ -132,7 +132,23 @@ export function InvoiceViewer({ invoice, onClose }) {
             {view.cufe}
           </p>
         )}
-        {view.referenceCode && <p className="invoice-muted">Referencia: {view.referenceCode}</p>}
+
+        <p className="invoice-muted invoice-refs">
+          {view.referenceCode && (
+            <span>
+              Referencia <span className="serial">{view.referenceCode}</span>
+            </span>
+          )}
+          {view.resolution && (
+            <span>
+              Resolución DIAN <span className="serial">{view.resolution}</span>
+            </span>
+          )}
+        </p>
+
+        {view.isValidated && !view.isVoided && view.referenceCode && (
+          <CollectionPanel identifier={view.referenceCode} initial={view.collection} simulated={view.isSimulated} />
+        )}
 
         <footer className="invoice-actions">
           {view.publicUrl && (
@@ -140,13 +156,13 @@ export function InvoiceViewer({ invoice, onClose }) {
               Ver en Factus
             </a>
           )}
-          {view.paymentUrl && (
-            <a className="invoice-btn pay" href={view.paymentUrl} target="_blank" rel="noopener noreferrer">
-              Cobrar con Factus Pay
+          {!view.isSimulated && view.number && (
+            <a className="invoice-btn" href={backendClient.invoicePdfUrl(view.number)} target="_blank" rel="noopener noreferrer">
+              <FileDown size={16} aria-hidden="true" /> PDF DIAN
             </a>
           )}
           <button type="button" className="invoice-btn" onClick={() => window.print()}>
-            Imprimir / PDF
+            <Printer size={16} aria-hidden="true" /> Imprimir
           </button>
           <button type="button" className="invoice-btn primary" onClick={() => dialogRef.current?.close()} autoFocus>
             Cerrar
@@ -154,5 +170,40 @@ export function InvoiceViewer({ invoice, onClose }) {
         </footer>
       </article>
     </dialog>
+  );
+}
+
+function ItemsTable({ items }) {
+  return (
+    <table className="invoice-items">
+      <thead>
+        <tr>
+          <th scope="col">Descripción</th>
+          <th scope="col" className="num">
+            Cant.
+          </th>
+          <th scope="col" className="num">
+            Precio
+          </th>
+          <th scope="col" className="num">
+            IVA
+          </th>
+          <th scope="col" className="num">
+            Subtotal
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((item, index) => (
+          <tr key={`${item.name}-${index}`}>
+            <td>{item.name}</td>
+            <td className="num">{item.quantity}</td>
+            <td className="num">{formatMoney(item.price)}</td>
+            <td className="num">{item.isExcluded ? 'Excl.' : `${item.taxRate}%`}</td>
+            <td className="num">{formatMoney(item.subtotal)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

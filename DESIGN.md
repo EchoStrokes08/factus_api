@@ -257,11 +257,11 @@ Compact, printed, never pill-shaped.
 - **Primary:** intaglio-900 fill with intaglio-text label, 600 weight 0.8rem, 0.3rem 0.7rem padding, optional 14px lucide icon; hover moves to intaglio-700 with white text.
 - **Outline:** transparent with paper-rule-strong border and ink-soft label; hover fills white.
 - **Pay:** outline in validation green.
-- **Danger:** borderless serial-red text pushed to the row's end; hover adds serial-wash. Clicking it never acts directly: the row is replaced by the consequence sentence in serial-deep plus a solid red confirm button and a cancel, auto-dismissing after 6 seconds.
+- **Danger:** borderless serial-red text pushed to the row's end; hover adds serial-wash. Clicking it never acts directly: the row is replaced by the consequence sentence in serial-deep (naming the exact effect, e.g. the credit-note amount) plus a solid red confirm button that takes focus and a cancel, auto-dismissing after 8 seconds. An action that the law or Factus would refuse (deleting a validated credit note, annulling an already annulled invoice) is never offered. The annul action uses a ban icon; delete uses a trash icon.
 - **Focus:** 2px serial-red outline at 2px offset on paper; 2px intaglio-text outline on the ink field.
 
 ### Chips (tags)
-- **Style:** 0.72rem 600, 0.15rem 0.5rem, 4px corner, washed fill with dark ink of the same hue: valid (validated DIAN), ochre (simulated), sunken paper (unvalidated), outlined with a 12px map-pin icon (DANE code in serial mono).
+- **Style:** 0.72rem 600, 0.15rem 0.5rem, 4px corner, washed fill with dark ink of the same hue: serial wash ("Anulada · NC…", always first), valid (validated DIAN), ochre (simulated), sunken paper (unvalidated), outlined with a 12px map-pin icon (DANE code in serial mono).
 - **Counts:** tab count chips are sunken paper, switching to intaglio-900 (or violet on the credit-note tab) when active.
 
 ### Cards / Containers (document ficha)
@@ -269,7 +269,7 @@ Compact, printed, never pill-shaped.
 - **Background:** paper-raised on the paper column.
 - **Shadow Strategy:** paper rest only (see Elevation).
 - **Border:** paper-rule-strong outer border plus paper-rule outline inset 5px.
-- **Internal Padding:** 1rem 1.1rem; grid of seal (52px) and body. Every card shares one fixed scale: title plus red folio left, condensed total right, meta, tags, CUFE line, then a dashed-rule action row. Credit notes swap the seal ink to violet.
+- **Internal Padding:** 1rem 1.1rem; grid of seal (52px) and body. Every card shares one fixed scale: title plus red folio left, condensed total right, meta, tags, CUFE line, then a dashed-rule action row. Credit notes swap the seal ink to violet. An annulled invoice drops to the paper substrate, its seal fades to paper-rule-strong and its total is struck through with a 2px serial-red line: the value no longer exists.
 
 ### Inputs / Fields
 - **Style:** the engraved field: intaglio-950 well, 1px intaglio-line border at 0.3 alpha, 4px corner, 40px square send button in intaglio-text that goes white on hover and fades to 0.35 when empty.
@@ -277,7 +277,9 @@ Compact, printed, never pill-shaped.
 
 ### Navigation
 - **Tabs:** text tabs on paper with 1.5rem gaps over a paper-rule-strong baseline; inactive ink-faint, active ink with a 3px intaglio-900 underline that scales in from the left (0.35s, ease-out). The credit-note tab's marker is violet.
-- **Top bar:** wordmark and tagline left, engine badge right (outlined, 4px, brightening its border when the engine is known).
+- **Top bar:** wordmark and tagline left; a right-aligned row of outlined status chips (4px): agent engine (brightens when known), mode (ochre border for simulated, validation green for real sandbox) and the DIAN numbering range in use (prefix and free folios in serial mono, validity date). A missing range shows a serial-red chip.
+- **History search:** a raised-paper field with a 15px search icon under the tabs; focus darkens the border to intaglio-700.
+- **Notices:** after an action, a washed banner under the search (valid for success, ochre for warnings such as "the payment was already collected", serial for errors) with a close button; success and warnings retire after 12 seconds, errors stay.
 
 ### Live Rosette and Call Button (signature)
 A canvas guilloche of 16 closed 11-petal curves around the circular call button, stroked in intaglio-line with two highlight lines in intaglio-text. Each call mood (idle, connecting, active, listening, thinking, speaking) eases its amplitude, speed, spread and alpha; every recognised or spoken word pulses its energy. The call button is the intaglio-text disc with a phone icon, turning serial red (hang up) during a call. Under reduced motion the rosette redraws once per state change.
@@ -289,7 +291,7 @@ An SVG seal deterministically derived from the document's CUFE (or reference or 
 Rows, not bubbles: speaker label (uppercase, condensed), text, right-aligned serial timestamp, separated by dashed intaglio-line rules at 0.16 alpha. The current turn sits on an intaglio-700 band with brighter text; errors use a translucent serial band. Rows rise in over 0.45s and fade out under a 2rem top mask. An issued invoice arrives in the ledger as a paper slip that unrolls with a clip-path reveal and a slight rotation.
 
 ### Invoice Viewer
-A native dialog holding a raised-paper sheet with a 135deg hatch and the ink guilloche band. The head is seal, condensed document type, red serial number and status badges above a 3px double intaglio rule; items are a tabular table with alternating faint green rows; the grand total repeats the double rule and is set at the 2.6rem denomination size. Print mode hides everything but the sheet.
+A native dialog holding a raised-paper sheet with a 135deg hatch and the ink guilloche band. The head is seal, condensed document type, red serial number and status badges above a 3px double intaglio rule; items are a tabular table with alternating faint green rows; the grand total repeats the double rule and is set at the 2.6rem denomination size. An annulled invoice receives a rubber stamp: "ANULADA" in 800 condensed serial red inside a 4px double border, rotated -12deg, multiplied over the items, with the credit-note number in serial mono, stamped in with a 0.45s scale-down. Below the references sits the Factus Pay block, a dashed-rule panel that polls the collection and shows, in order, a spinner while the QR is generated, the 132px QR on white with the condensed amount, or the paid state in validation green. When the sheet is a list row without items it shows three shimmering paper bars while the detail loads. Print mode hides everything but the sheet (the QR prints).
 
 ## Do's and Don'ts
 

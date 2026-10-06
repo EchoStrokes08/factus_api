@@ -14,7 +14,7 @@ The story the demo tells is about a merchant or cashier (independent professiona
 Factus Voz issues Colombian electronic invoices (DIAN) and credit notes by holding a "phone call" with an AI agent in natural language. The browser does speech-to-text, the agent extracts customer, items, VAT and payment method, the backend sends the document to Factus API v2 and registers the collection in Factus Pay. Success in the demo: an evaluator watches a spoken request turn into a validated invoice with CUFE, sees it in the history, and can open, print or cancel it.
 
 ## Positioning
-Voice conversation replaces the invoicing form. Behind it: automatic DANE DIVIPOLA code resolution from spoken city names, DIAN-validated invoices with CUFE, simultaneous Factus Pay collection, and the legally correct delete-vs-annul flow (draft is destroyed; a validated invoice is annulled with a credit note, Decreto 358 de 2020).
+Voice conversation replaces the invoicing form. Behind it: automatic DANE DIVIPOLA code resolution from spoken city names, automatic DIAN numbering range selection (GET /v2/numbering-ranges), DIAN-validated invoices with CUFE, a Factus Pay collection whose QR appears live in the invoice, and the legally correct delete-vs-annul flow (an unvalidated invoice is destroyed; a validated one is annulled automatically with a concept-2 credit note that replicates it, idempotently).
 
 ## Operating Context
 - Single page: call screen (main) plus a secondary history panel of invoices and credit notes.
@@ -27,7 +27,8 @@ Voice conversation replaces the invoicing form. Behind it: automatic DANE DIVIPO
 ## Capabilities and Constraints
 - Stack: React 18 + Vite, plain CSS per feature, no UI library. Frontend only talks to its own backend.
 - Spanish (Colombia) copy throughout; currency COP.
-- Deleting an invoice may mean annulling it with a credit note; the UI must not hide that consequence.
+- Deleting an invoice may mean annulling it with a credit note; the UI must not hide that consequence, and must not offer actions Factus would refuse.
+- The collection never blocks the invoice: when Factus Pay is unavailable or the amount is outside its limits ($10.000 – $12.000.000), the reason is shown instead.
 
 ## Brand Commitments
 - Name: "Factus Voz". Tagline in use: "Factura y anula hablando con el agente".

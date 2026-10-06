@@ -1,48 +1,27 @@
 import { env } from '../config/env.js';
-import { createHttpClient } from './httpClientFactory.js';
-import { ApiError } from '../utils/ApiError.js';
-import { mockCreateCreditNote, mockDeleteCreditNote, mockListCreditNotes } from './mockData.js';
+import { createApiClient, segment } from './httpClientFactory.js';
+import * as sandbox from './mock/factusSandbox.js';
 
-const SOURCE = 'factus.creditNotes';
-const http = createHttpClient(env.factus.baseUrl);
+/** Acceso crudo a /v2/credit-notes de Factus. */
 
-export async function createAndValidateCreditNote(accessToken, payload) {
-  if (env.mockMode) return mockCreateCreditNote(payload);
+const http = createApiClient(env.factus.baseUrl, 'factus.creditNotes');
 
-  try {
-    const { data } = await http.post('/v2/credit-notes/validate', payload, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    return data;
-  } catch (error) {
-    throw ApiError.fromAxiosError(error, SOURCE);
-  }
-}
+const real = {
+  /** POST /v2/credit-notes/validate - un reference_code repetido devuelve la existente. */
+  createAndValidate: (token, payload) => http.post('/v2/credit-notes/validate', payload, { token }),
 
-export async function deleteCreditNoteByReference(accessToken, referenceCode) {
-  if (env.mockMode) return mockDeleteCreditNote(referenceCode);
+  /** GET /v2/credit-notes - acepta filter[reference_code], filter[number], page... */
+  list: (token, params) => http.get('/v2/credit-notes', { token, params }),
 
-  try {
-    const { data } = await http.delete(
-      `/v2/credit-notes/reference/${encodeURIComponent(referenceCode)}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } },
-    );
-    return data;
-  } catch (error) {
-    throw ApiError.fromAxiosError(error, SOURCE);
-  }
-}
+  /** DELETE /v2/credit-notes/reference/:reference_code - solo si NO esta validada. */
+  destroyByReference: (token, referenceCode) =>
+    http.delete(`/v2/credit-notes/reference/${segment(referenceCode)}`, { token }),
+};
 
-export async function listCreditNotes(accessToken, params = {}) {
-  if (env.mockMode) return mockListCreditNotes();
+const mock = {
+  createAndValidate: async (token, payload) => sandbox.createCreditNote(payload),
+  list: async (token, params) => sandbox.listCreditNotes(params),
+  destroyByReference: async (token, referenceCode) => sandbox.destroyCreditNote(referenceCode),
+};
 
-  try {
-    const { data } = await http.get('/v2/credit-notes', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      params,
-    });
-    return data;
-  } catch (error) {
-    throw ApiError.fromAxiosError(error, SOURCE);
-  }
-}
+export const { createAndValidate, list, destroyByReference } = env.mockMode ? mock : real;

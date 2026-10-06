@@ -16,6 +16,9 @@ export const env = {
     clientSecret: process.env.FACTUS_CLIENT_SECRET || '',
     username: process.env.FACTUS_USERNAME || '',
     password: process.env.FACTUS_PASSWORD || '',
+    // Opcionales: vacios = el rango se resuelve con GET /v2/numbering-ranges.
+    billRangeId: process.env.FACTUS_BILL_RANGE_ID || '',
+    creditNoteRangeId: process.env.FACTUS_CREDIT_NOTE_RANGE_ID || '',
   },
 
   factusPay: {

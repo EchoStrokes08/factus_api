@@ -17,7 +17,7 @@ function emptyDraft() {
 }
 
 function emptySession() {
-  return { messages: [], draft: emptyDraft(), history: [] };
+  return { messages: [], draft: emptyDraft() };
 }
 
 export function getSession(sessionId, clientState) {

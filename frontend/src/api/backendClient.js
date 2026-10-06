@@ -5,47 +5,58 @@
  * backend (otra base URL, auth de usuario, etc.) solo se toca este archivo.
  */
 
-// En desarrollo local apunta a http://localhost:4000 si no se especifica.
-// En producción (ej. Vercel con API unificada), un string vacío usa rutas relativas (/api/...)
+// En desarrollo apunta a http://localhost:4000 si no se especifica.
+// En produccion (Vercel con API unificada) un string vacio usa rutas relativas.
 const backendEnv = import.meta.env.VITE_BACKEND_URL;
-const BASE_URL = backendEnv !== undefined
-  ? backendEnv
-  : (import.meta.env.DEV ? 'http://localhost:4000' : '');
+const BASE_URL = backendEnv !== undefined ? backendEnv : import.meta.env.DEV ? 'http://localhost:4000' : '';
 
-async function request(path, options = {}) {
-  const res = await fetch(`${BASE_URL}/api${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
+const apiUrl = (path) => `${BASE_URL}/api${path}`;
+const segment = (value) => encodeURIComponent(value);
 
-  const body = await res.json().catch(() => null);
-
-  if (!res.ok) {
-    const message = body?.message || `Error ${res.status} al llamar ${path}`;
-    const error = new Error(message);
-    error.source = body?.source || 'backend';
-    error.details = body?.details;
-    throw error;
+async function request(path, { method = 'GET', body, signal } = {}) {
+  let res;
+  try {
+    res = await fetch(apiUrl(path), {
+      method,
+      signal,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (error) {
+    if (error.name === 'AbortError') throw error;
+    throw Object.assign(new Error('No hay conexión con el servidor. Revisa tu red e inténtalo de nuevo.'), {
+      source: 'network',
+    });
   }
 
-  return body?.data;
+  const payload = await res.json().catch(() => null);
+  if (!res.ok) {
+    const error = new Error(payload?.message || `El servidor respondió ${res.status}`);
+    error.source = payload?.source || 'backend';
+    error.status = res.status;
+    error.details = payload?.details;
+    throw error;
+  }
+  return payload?.data ?? payload;
 }
 
 export const backendClient = {
-  // `state` es el estado de la conversacion que devolvio el turno anterior.
-  // El backend es serverless y no recuerda nada entre peticiones.
-  sendAgentMessage: (sessionId, text, state) =>
-    request('/agent/message', { method: 'POST', body: JSON.stringify({ sessionId, text, state }) }),
+  getHealth: () => request('/health'),
+  getNumberingRanges: () => request('/numbering-ranges'),
 
-  endAgentSession: (sessionId) => request(`/agent/session/${sessionId}`, { method: 'DELETE' }),
+  // `state` es el estado de la conversacion que devolvio el turno anterior:
+  // el backend es serverless y no recuerda nada entre peticiones.
+  sendAgentMessage: (sessionId, text, state) =>
+    request('/agent/message', { method: 'POST', body: { sessionId, text, state } }),
+  endAgentSession: (sessionId) => request(`/agent/session/${segment(sessionId)}`, { method: 'DELETE' }),
 
   listInvoices: () => request('/invoices'),
-  getInvoice: (referenceCode) => request(`/invoices/${encodeURIComponent(referenceCode)}`),
-  deleteInvoice: (referenceCode) => request(`/invoices/${encodeURIComponent(referenceCode)}`, { method: 'DELETE' }),
+  getInvoice: (identifier, { signal } = {}) => request(`/invoices/${segment(identifier)}`, { signal }),
+  getCollection: (identifier, { signal } = {}) => request(`/invoices/${segment(identifier)}/collection`, { signal }),
+  /** Elimina la factura si no esta validada; si lo esta, la anula con nota credito. */
+  cancelInvoice: (identifier) => request(`/invoices/${segment(identifier)}`, { method: 'DELETE' }),
+  invoicePdfUrl: (identifier) => apiUrl(`/invoices/${segment(identifier)}/pdf`),
 
   listCreditNotes: () => request('/credit-notes'),
-  deleteCreditNote: (referenceCode) =>
-    request(`/credit-notes/${encodeURIComponent(referenceCode)}`, { method: 'DELETE' }),
-
-  getMunicipalities: () => request('/catalogs/municipalities'),
+  deleteCreditNote: (referenceCode) => request(`/credit-notes/${segment(referenceCode)}`, { method: 'DELETE' }),
 };

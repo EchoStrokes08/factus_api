@@ -126,6 +126,167 @@
   color: var(--ochre-ink);
 }
 
+.invoice-badge.draft {
+  background: var(--paper-sunken);
+  color: var(--ink-soft);
+}
+
+/* Sello de anulacion: tinta serial roja, como un timbre sobre el papel. */
+.invoice-stamp {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  z-index: 2;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.45rem 1.4rem 0.55rem;
+  border: 4px double var(--serial);
+  border-radius: var(--radius);
+  color: var(--serial);
+  font-size: 2.6rem;
+  font-weight: 800;
+  font-stretch: 64%;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  opacity: 0.82;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  animation: stamp-in 0.45s var(--ease-out) both;
+}
+
+.invoice-stamp .serial {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+@keyframes stamp-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-12deg) scale(1.35);
+  }
+}
+
+.invoice-sheet.is-voided .invoice-items,
+.invoice-sheet.is-voided .invoice-totals {
+  opacity: 0.6;
+}
+
+.invoice-error {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.85rem;
+  color: var(--serial-deep);
+  background: var(--serial-wash);
+  border-radius: var(--radius);
+}
+
+.invoice-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.invoice-loading span {
+  height: 2.2rem;
+  border-radius: var(--radius);
+  background: linear-gradient(100deg, var(--paper-sunken) 40%, var(--paper-raised) 50%, var(--paper-sunken) 60%) 0 0 / 220% 100%;
+  animation: invoice-shimmer 1.4s linear infinite;
+}
+
+@keyframes invoice-shimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+.invoice-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+}
+
+/* ---------- Cobro Factus Pay ---------- */
+
+.collection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.85rem 1rem;
+  border: 1px dashed var(--paper-rule-strong);
+  border-radius: var(--radius);
+}
+
+.collection h3 {
+  margin: 0;
+}
+
+.collection-note {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.collection-note svg {
+  flex: none;
+}
+
+.collection-note.is-paid {
+  color: var(--valid-ink);
+  font-weight: 600;
+}
+
+.collection-ready {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.collection-ready p {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.collection-ready strong {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-stretch: 68%;
+  color: var(--ink);
+}
+
+.collection-qr {
+  width: 132px;
+  height: 132px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid var(--paper-rule-strong);
+  border-radius: var(--radius);
+  image-rendering: pixelated;
+}
+
+.spin {
+  animation: viewer-spin 0.9s linear infinite;
+}
+
+@keyframes viewer-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .invoice-party {
   display: flex;
   flex-direction: column;
@@ -240,6 +401,7 @@
 }
 
 .invoice-btn {
+  gap: 0.4rem;
   font: inherit;
   font-size: 0.88rem;
   font-weight: 600;
@@ -308,6 +470,15 @@
   .invoice-totals {
     align-self: stretch;
   }
+
+  .invoice-stamp {
+    font-size: 1.9rem;
+  }
+
+  .collection-ready {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media print {
@@ -328,7 +499,8 @@
     box-shadow: none;
   }
 
-  .invoice-actions {
+  .invoice-actions,
+  .invoice-loading {
     display: none;
   }
 }

@@ -46,20 +46,35 @@
   position: relative;
   z-index: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
   padding: 2rem 2.5rem 0;
 }
 
 .app-brand {
+  flex: none;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
 
-.engine-badge {
+/* Estado del sistema: motor del agente, modo y rango DIAN en uso. */
+.app-status {
   margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  max-width: 34rem;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
   padding: 0.35rem 0.7rem;
   font-size: 0.78rem;
   color: var(--intaglio-text-faint);
@@ -68,17 +83,48 @@
   white-space: nowrap;
 }
 
-.engine-badge strong {
+.status-chip strong {
   font-weight: 600;
   color: var(--intaglio-text-soft);
 }
 
-.engine-badge.is-known {
+.status-chip.is-known {
   border-color: var(--intaglio-line);
 }
 
-.engine-badge.is-known strong {
+.status-chip.is-known strong,
+.status-chip.is-range {
   color: var(--intaglio-text);
+}
+
+.status-chip.is-mock {
+  color: var(--ochre-wash);
+  border-color: rgba(199, 138, 44, 0.6);
+}
+
+.status-chip.is-live {
+  color: var(--valid-wash);
+  border-color: rgba(47, 122, 79, 0.9);
+}
+
+.status-chip.is-error {
+  color: var(--serial-wash);
+  border-color: rgba(179, 38, 45, 0.8);
+}
+
+.status-chip .serial {
+  font-size: 0.74rem;
+  color: var(--intaglio-text);
+}
+
+.status-sub {
+  color: var(--intaglio-text-faint);
+}
+
+.status-sub::before {
+  content: '·';
+  margin-right: 0.4rem;
+  color: var(--intaglio-line);
 }
 
 .app-wordmark {
@@ -98,6 +144,7 @@
 
 .app-tagline {
   margin: 0;
+  white-space: nowrap;
   font-size: 0.82rem;
   color: var(--intaglio-text-faint);
 }
@@ -135,6 +182,15 @@
 
   .app-tagline {
     display: none;
+  }
+
+  .app-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .app-status {
+    justify-content: flex-start;
   }
 
   .app-sidebar {

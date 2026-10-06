@@ -1,76 +1,39 @@
 import { env } from '../config/env.js';
-import { createHttpClient } from './httpClientFactory.js';
-import { ApiError } from '../utils/ApiError.js';
-import { mockCreateBill, mockDeleteBill, mockListBills, mockGetBill } from './mockData.js';
-
-const SOURCE = 'factus.bills';
-const http = createHttpClient(env.factus.baseUrl);
+import { createApiClient, segment } from './httpClientFactory.js';
+import * as sandbox from './mock/factusSandbox.js';
 
 /**
- * Acceso crudo a /v2/bills/* de Factus. Recibe el token ya resuelto
- * (lo entrega tokenManager) y el payload ya validado/armado por
- * invoiceService. Esta funcion no conoce reglas de negocio.
+ * Acceso crudo a /v2/bills de Factus. Recibe el token ya resuelto y el
+ * payload ya armado: aqui no hay reglas de negocio, solo HTTP.
+ * https://developers.factus.com.co/endpoints
  */
 
-export async function createAndValidateBill(accessToken, payload) {
-  if (env.mockMode) return mockCreateBill(payload);
+const http = createApiClient(env.factus.baseUrl, 'factus.bills');
 
-  try {
-    const { data } = await http.post('/v2/bills/validate', payload, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    return data;
-  } catch (error) {
-    throw ApiError.fromAxiosError(error, SOURCE);
-  }
-}
+const real = {
+  /** POST /v2/bills/validate - crea, firma y envia a la DIAN en un paso. */
+  createAndValidate: (token, payload) => http.post('/v2/bills/validate', payload, { token }),
 
-export async function deleteBillByReference(accessToken, referenceCode) {
-  if (env.mockMode) return mockDeleteBill(referenceCode);
+  /** GET /v2/bills - acepta filter[reference_code], filter[number], page... */
+  list: (token, params) => http.get('/v2/bills', { token, params }),
 
-  try {
-    const { data } = await http.delete(
-      `/v2/bills/destroy/reference/${encodeURIComponent(referenceCode)}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } },
-    );
-    return data;
-  } catch (error) {
-    throw ApiError.fromAxiosError(error, SOURCE);
-  }
-}
+  /** GET /v2/bills/:number - detalle completo (cliente, items, totales, CUFE). */
+  get: (token, number) => http.get(`/v2/bills/${segment(number)}`, { token }),
 
-export async function listBills(accessToken, params = {}) {
-  if (env.mockMode) return mockListBills();
+  /** GET /v2/bills/:number/download-pdf - representacion grafica en base64. */
+  downloadPdf: (token, number) => http.get(`/v2/bills/${segment(number)}/download-pdf`, { token }),
 
-  try {
-    const { data } = await http.get('/v2/bills', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      params,
-    });
-    return data;
-  } catch (error) {
-    throw ApiError.fromAxiosError(error, SOURCE);
-  }
-}
+  /** DELETE /v2/bills/destroy/reference/:reference_code - solo si NO esta validada. */
+  destroyByReference: (token, referenceCode) =>
+    http.delete(`/v2/bills/destroy/reference/${segment(referenceCode)}`, { token }),
+};
 
-export async function getBillByReference(accessToken, referenceCode) {
-  if (env.mockMode) {
-    const bill = mockGetBill(referenceCode);
-    if (!bill) {
-      throw new ApiError(`Factura no encontrada para referencia ${referenceCode}`, {
-        statusCode: 404,
-        source: SOURCE,
-      });
-    }
-    return bill;
-  }
+const mock = {
+  createAndValidate: async (token, payload) => sandbox.createBill(payload),
+  list: async (token, params) => sandbox.listBills(params),
+  get: async (token, number) => sandbox.getBill(number),
+  downloadPdf: async (token, number) => sandbox.downloadBillPdf(number),
+  destroyByReference: async (token, referenceCode) => sandbox.destroyBill(referenceCode),
+};
 
-  try {
-    const { data } = await http.get(`/v2/bills/show/${encodeURIComponent(referenceCode)}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    return data;
-  } catch (error) {
-    throw ApiError.fromAxiosError(error, SOURCE);
-  }
-}
+export const { createAndValidate, list, get, downloadPdf, destroyByReference } = env.mockMode ? mock : real;

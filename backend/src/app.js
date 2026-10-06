@@ -6,33 +6,25 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 
 export const app = express();
 
-const allowedOriginSetting = env.frontendOrigin || '*';
+// FRONTEND_ORIGIN admite una lista separada por comas o "*". En Vercel el
+// frontend y la API comparten dominio, asi que alli CORS ni interviene.
+const allowedOrigins = env.frontendOrigin.split(',').map((origin) => origin.trim()).filter(Boolean);
+const isLocalhost = (origin) => /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
+app.disable('x-powered-by');
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (
-        allowedOriginSetting === '*' ||
-        origin === allowedOriginSetting ||
-        origin.endsWith('.vercel.app') ||
-        origin.includes('localhost')
-      ) {
-        return callback(null, true);
-      }
-      const allowedList = allowedOriginSetting.split(',').map((o) => o.trim());
-      if (allowedList.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(null, true); // Permitir por defecto para facilitar despliegues
+    origin(origin, callback) {
+      const allowed = !origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin) || isLocalhost(origin);
+      callback(null, allowed);
     },
-    credentials: true,
   }),
 );
 // El agente reenvia su historial de conversacion en cada mensaje.
 app.use(express.json({ limit: '1mb' }));
 
 app.use('/api', apiRouter);
-// Por compatibilidad si la función serverless en Vercel recibe la ruta sin /api
+// Por compatibilidad si la funcion serverless de Vercel recibe la ruta sin /api.
 app.use(apiRouter);
 
 app.use(notFoundHandler);

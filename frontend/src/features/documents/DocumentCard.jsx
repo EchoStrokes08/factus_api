@@ -1,48 +1,46 @@
 import { useEffect, useState } from 'react';
-import { CreditCard, ExternalLink, Eye, MapPin, Trash2 } from 'lucide-react';
+import { Ban, ExternalLink, Eye, MapPin, Trash2 } from 'lucide-react';
 import { GuillocheSeal } from '../../components/Guilloche.jsx';
+import { formatMoney } from './documentModel.js';
 
-const money = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+const CONFIRM_TIMEOUT_MS = 8000;
 
 /**
- * Ficha de un documento emitido. Todas las fichas comparten la misma escala:
- * cambia el sello y la tinta segun el tipo (factura / nota credito) y el estado.
+ * Ficha de un documento emitido. Todas comparten la misma escala: cambia el
+ * sello y la tinta segun el tipo (factura / nota credito) y el estado.
+ *
+ * `destructive` describe la accion irreversible disponible, si la hay:
+ *   { label, verb, consequence, run }  — p. ej. Anular / Eliminar.
+ * Si es null no se ofrece ninguna: nunca se muestra un boton condenado a fallar.
  */
 export function DocumentCard({
   kind = 'invoice',
   label,
   folio,
-  customer,
+  subtitle,
   reference,
   total,
   cufe,
   municipalityCode,
   isValidated,
+  isSimulated,
+  voidedBy,
   publicUrl,
-  paymentUrl,
   onView,
-  onDelete,
-  deleting,
+  destructive,
+  busy,
 }) {
   const [confirming, setConfirming] = useState(false);
-  const isMock = String(cufe || '').startsWith('mock-');
-  const amount = Number(total);
-
-  // Una factura validada no se borra: se anula emitiendo una nota credito.
-  const deleteLabel = kind === 'invoice' && isValidated ? 'Anular' : 'Eliminar';
-  const consequence =
-    kind === 'invoice' && isValidated
-      ? 'Se emitirá una nota crédito ante la DIAN.'
-      : 'Se borrará el documento de Factus.';
+  const isVoided = Boolean(voidedBy?.length);
 
   useEffect(() => {
     if (!confirming) return undefined;
-    const timer = setTimeout(() => setConfirming(false), 6000);
+    const timer = setTimeout(() => setConfirming(false), CONFIRM_TIMEOUT_MS);
     return () => clearTimeout(timer);
   }, [confirming]);
 
   return (
-    <article className={`document-card ${kind}`}>
+    <article className={`document-card ${kind} ${isVoided ? 'is-voided' : ''}`} aria-busy={busy}>
       <GuillocheSeal seed={cufe || reference || folio} size={52} className="document-seal" />
 
       <div className="document-main">
@@ -50,20 +48,22 @@ export function DocumentCard({
           <h3 className="document-title">
             {label} <span className="serial document-folio">{folio}</span>
           </h3>
-          {Number.isFinite(amount) && total != null && (
-            <span className="document-total">{money.format(amount)}</span>
-          )}
+          {total != null && <span className="document-total">{formatMoney(total)}</span>}
         </header>
 
         <p className="document-meta">
-          {customer && <span className="document-customer">{customer}</span>}
-          {reference && <span className="serial document-ref">Ref. {reference}</span>}
+          {subtitle && <span className="document-customer">{subtitle}</span>}
+          {reference && reference !== folio && <span className="serial document-ref">Ref. {reference}</span>}
         </p>
 
         <ul className="document-tags" aria-label="Estado del documento">
-          {isValidated && <li className="tag valid">Validada DIAN</li>}
-          {!isValidated && <li className="tag draft">Sin validar</li>}
-          {isMock && <li className="tag mock">Simulada</li>}
+          {isVoided && (
+            <li className="tag voided">
+              Anulada · <span className="serial">{voidedBy[0]}</span>
+            </li>
+          )}
+          {isValidated ? <li className="tag valid">Validada DIAN</li> : <li className="tag draft">Sin validar</li>}
+          {isSimulated && <li className="tag mock">Simulada</li>}
           {municipalityCode && (
             <li className="tag dane" title="Código de municipio DANE DIVIPOLA">
               <MapPin size={12} strokeWidth={2} aria-hidden="true" />
@@ -74,62 +74,65 @@ export function DocumentCard({
 
         {cufe && (
           <p className="document-cufe serial" title={cufe}>
-            <span>CUFE</span>
+            <span>{kind === 'invoice' ? 'CUFE' : 'CUDE'}</span>
             {cufe}
           </p>
         )}
 
-        <div className="document-actions">
-          {confirming ? (
-            <div className="document-confirm" role="alert">
-              <span>{consequence}</span>
-              <button
-                type="button"
-                className="doc-btn danger solid"
-                onClick={() => {
-                  setConfirming(false);
-                  onDelete();
-                }}
-              >
-                Sí, {deleteLabel.toLowerCase()}
-              </button>
-              <button type="button" className="doc-btn" onClick={() => setConfirming(false)}>
-                Cancelar
-              </button>
-            </div>
-          ) : (
-            <>
-              {onView && (
-                <button type="button" onClick={onView} className="doc-btn primary">
-                  <Eye size={14} strokeWidth={2} aria-hidden="true" />
-                  Ver factura
+        {(onView || publicUrl || destructive) && (
+          <div className="document-actions">
+            {confirming && destructive ? (
+              <div className="document-confirm" role="alertdialog" aria-label={`Confirmar: ${destructive.label}`}>
+                <span>{destructive.consequence}</span>
+                <button
+                  type="button"
+                  className="doc-btn danger solid"
+                  autoFocus
+                  onClick={() => {
+                    setConfirming(false);
+                    destructive.run();
+                  }}
+                >
+                  Sí, {destructive.verb}
                 </button>
-              )}
-              {publicUrl && (
-                <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="doc-btn">
-                  <ExternalLink size={14} strokeWidth={2} aria-hidden="true" />
-                  Ver en Factus
-                </a>
-              )}
-              {paymentUrl && (
-                <a href={paymentUrl} target="_blank" rel="noopener noreferrer" className="doc-btn pay">
-                  <CreditCard size={14} strokeWidth={2} aria-hidden="true" />
-                  Factus Pay
-                </a>
-              )}
-              <button
-                type="button"
-                onClick={() => setConfirming(true)}
-                disabled={deleting}
-                className="doc-btn danger"
-                title={kind === 'invoice' && isValidated ? 'Anular con nota crédito' : 'Eliminar documento'}
-              >
-                <Trash2 size={14} strokeWidth={2} aria-hidden="true" />
-                {deleting ? 'Procesando…' : deleteLabel}
-              </button>
-            </>
-          )}
-        </div>
+                <button type="button" className="doc-btn" onClick={() => setConfirming(false)}>
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <>
+                {onView && (
+                  <button type="button" onClick={onView} className="doc-btn primary">
+                    <Eye size={14} strokeWidth={2} aria-hidden="true" />
+                    Ver
+                  </button>
+                )}
+                {publicUrl && (
+                  <a href={publicUrl} target="_blank" rel="noopener noreferrer" className="doc-btn">
+                    <ExternalLink size={14} strokeWidth={2} aria-hidden="true" />
+                    Ver en Factus
+                  </a>
+                )}
+                {destructive && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirming(true)}
+                    disabled={busy}
+                    className="doc-btn danger"
+                    title={destructive.consequence}
+                  >
+                    {destructive.verb === 'anular' ? (
+                      <Ban size={14} strokeWidth={2} aria-hidden="true" />
+                    ) : (
+                      <Trash2 size={14} strokeWidth={2} aria-hidden="true" />
+                    )}
+                    {busy ? 'Procesando…' : destructive.label}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );

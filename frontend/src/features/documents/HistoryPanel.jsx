@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { RefreshCw, Search, X } from 'lucide-react';
 import { backendClient } from '../../api/backendClient.js';
 import { GuillocheSeal } from '../../components/Guilloche.jsx';
 import { DocumentCard } from './DocumentCard.jsx';
 import { InvoiceViewer } from './InvoiceViewer.jsx';
+import { formatMoney, markVoidedInvoices, normalizeCreditNote, normalizeInvoice } from './documentModel.js';
 import './HistoryPanel.css';
+
+const NOTICE_TIMEOUT_MS = 12000;
 
 const TABS = [
   { id: 'invoices', label: 'Facturas' },
@@ -12,68 +15,85 @@ const TABS = [
 ];
 
 /**
- * Panel secundario (no es el centro de la app) para ver y eliminar
- * facturas/notas credito ya creadas, por si el usuario no quiere hacerlo
- * por voz. Solo habla con backendClient; no conoce Factus directamente.
+ * Panel secundario (la llamada es el centro de la app) para ver, anular o
+ * eliminar documentos ya emitidos sin hablar. Solo habla con backendClient.
  */
-export function HistoryPanel({ refreshSignal }) {
+export function HistoryPanel({ refreshSignal, onActivity }) {
   const [tab, setTab] = useState('invoices');
   const [invoices, setInvoices] = useState([]);
   const [creditNotes, setCreditNotes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadedOnce, setLoadedOnce] = useState(false);
-  const [deletingCode, setDeletingCode] = useState(null);
+  const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null); // { tone, text }
+  const [query, setQuery] = useState('');
   const [openInvoice, setOpenInvoice] = useState(null);
 
-  async function loadAll() {
+  const loadAll = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [invoiceRes, creditNoteRes] = await Promise.all([
-        backendClient.listInvoices(),
-        backendClient.listCreditNotes(),
-      ]);
-      setInvoices(asList(invoiceRes));
-      setCreditNotes(asList(creditNoteRes));
+      const [invoiceRes, creditNoteRes] = await Promise.all([backendClient.listInvoices(), backendClient.listCreditNotes()]);
+      const notes = creditNoteRes?.items ?? [];
+      setCreditNotes(notes);
+      setInvoices(markVoidedInvoices(invoiceRes?.items ?? [], notes));
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
       setLoadedOnce(true);
     }
-  }
+  }, []);
 
   useEffect(() => {
     loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshSignal]);
+  }, [loadAll, refreshSignal]);
 
-  async function removeInvoice(referenceCode) {
-    setDeletingCode(referenceCode);
+  // Los avisos de exito se retiran solos; los errores esperan a que se lean.
+  useEffect(() => {
+    if (!notice || notice.tone === 'error') return undefined;
+    const timer = setTimeout(() => setNotice(null), NOTICE_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  async function runAction(id, action, describe) {
+    setBusyId(id);
+    setNotice(null);
     try {
-      await backendClient.deleteInvoice(referenceCode);
-      await loadAll();
+      const result = await action();
+      setNotice(describe(result));
+      onActivity?.();
     } catch (err) {
-      setError(err.message);
+      setNotice({ tone: 'error', text: err.message });
     } finally {
-      setDeletingCode(null);
+      setBusyId(null);
     }
   }
 
-  async function removeCreditNote(referenceCode) {
-    setDeletingCode(referenceCode);
-    try {
-      await backendClient.deleteCreditNote(referenceCode);
-      await loadAll();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setDeletingCode(null);
-    }
-  }
+  const cancelInvoice = (view) =>
+    runAction(view.identifier, () => backendClient.cancelInvoice(view.identifier), (result) => ({
+      tone: result.warning ? 'warning' : 'success',
+      text: [result.message, result.warning].filter(Boolean).join(' '),
+    }));
 
-  const items = tab === 'invoices' ? invoices : creditNotes;
+  const deleteCreditNote = (view) =>
+    runAction(view.identifier, () => backendClient.deleteCreditNote(view.referenceCode), (result) => ({
+      tone: 'success',
+      text: result.message,
+    }));
+
+  const invoiceViews = useMemo(() => invoices.map((raw) => ({ raw, view: normalizeInvoice(raw) })), [invoices]);
+  const noteViews = useMemo(() => creditNotes.map(normalizeCreditNote), [creditNotes]);
+
+  const needle = query.trim().toLowerCase();
+  const matches = (...fields) => !needle || fields.some((field) => String(field ?? '').toLowerCase().includes(needle));
+  const visibleInvoices = invoiceViews.filter(({ view }) =>
+    matches(view.number, view.referenceCode, view.customerName, view.customerId),
+  );
+  const visibleNotes = noteViews.filter((note) => matches(note.number, note.referenceCode, note.billNumber, note.customerName));
+  const visibleCount = tab === 'invoices' ? visibleInvoices.length : visibleNotes.length;
+  const totalCount = tab === 'invoices' ? invoices.length : creditNotes.length;
   const counts = { invoices: invoices.length, creditNotes: creditNotes.length };
 
   return (
@@ -110,6 +130,31 @@ export function HistoryPanel({ refreshSignal }) {
         ))}
       </div>
 
+      {totalCount > 0 && (
+        <label className="history-search">
+          <Search size={15} strokeWidth={2} aria-hidden="true" />
+          <span className="visually-hidden">Buscar documentos</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Buscar por folio, cliente o referencia"
+            autoComplete="off"
+          />
+        </label>
+      )}
+
+      <div className="history-notice-slot" aria-live="polite">
+        {notice && (
+          <div className={`history-notice ${notice.tone}`} role={notice.tone === 'error' ? 'alert' : 'status'}>
+            <span>{notice.text}</span>
+            <button type="button" onClick={() => setNotice(null)} aria-label="Cerrar aviso">
+              <X size={14} strokeWidth={2} aria-hidden="true" />
+            </button>
+          </div>
+        )}
+      </div>
+
       <div
         id="history-list"
         className="history-list scrollbar-thin"
@@ -119,7 +164,7 @@ export function HistoryPanel({ refreshSignal }) {
       >
         {error && (
           <div className="history-error" role="alert">
-            <strong>No se pudieron cargar o modificar los documentos.</strong>
+            <strong>No se pudieron cargar los documentos.</strong>
             <span>{error}</span>
             <button type="button" className="doc-btn" onClick={loadAll}>
               Reintentar
@@ -135,50 +180,64 @@ export function HistoryPanel({ refreshSignal }) {
           </div>
         )}
 
-        {loadedOnce && !loading && !error && items.length === 0 && (
+        {loadedOnce && !error && visibleCount === 0 && (
           <div className="history-empty">
             <GuillocheSeal seed={tab} size={88} />
             <p>
-              {tab === 'invoices'
-                ? 'Aún no hay facturas. Inicia la llamada y dile al agente qué vendiste.'
-                : 'Aún no hay notas crédito. Aparecen aquí cuando anulas una factura validada.'}
+              {needle
+                ? `Nada coincide con "${query.trim()}".`
+                : tab === 'invoices'
+                  ? 'Aún no hay facturas. Inicia la llamada y dile al agente qué vendiste.'
+                  : 'Aún no hay notas crédito. Aparecen aquí cuando anulas una factura validada.'}
             </p>
           </div>
         )}
 
         {tab === 'invoices'
-          ? invoices.map((invoice) => (
+          ? visibleInvoices.map(({ raw, view }) => (
               <DocumentCard
-                key={invoice.reference_code}
+                key={view.identifier}
                 kind="invoice"
                 label="Factura"
-                folio={invoice.number || invoice.reference_code}
-                customer={invoice.customer?.names || invoice.customer?.company || 'Cliente'}
-                reference={invoice.reference_code}
-                total={invoice.totals?.total}
-                cufe={invoice.cufe}
-                municipalityCode={invoice.customer?.municipality_code}
-                isValidated={invoice.is_validated}
-                publicUrl={invoice.public_url || invoice.links?.public_url}
-                paymentUrl={invoice.payment_url}
-                onView={() => setOpenInvoice(invoice)}
-                deleting={deletingCode === invoice.reference_code}
-                onDelete={() => removeInvoice(invoice.reference_code)}
+                folio={view.number || view.referenceCode}
+                subtitle={view.customerName}
+                reference={view.referenceCode}
+                total={view.total}
+                cufe={view.cufe}
+                municipalityCode={view.municipalityCode}
+                isValidated={view.isValidated}
+                isSimulated={view.isSimulated}
+                voidedBy={view.voidedBy}
+                publicUrl={view.publicUrl}
+                onView={() => setOpenInvoice(raw)}
+                busy={busyId === view.identifier}
+                destructive={view.isVoided ? null : invoiceAction(view, () => cancelInvoice(view))}
               />
             ))
-          : creditNotes.map((note) => (
+          : visibleNotes.map((note) => (
               <DocumentCard
-                key={note.reference_code}
+                key={note.identifier}
                 kind="credit-note"
                 label="Nota crédito"
-                folio={note.number || note.reference_code}
-                customer={note.bill_number ? `Factura ref. ${note.bill_number}` : null}
-                reference={note.reference_code}
-                total={note.totals?.total}
+                folio={note.number || note.referenceCode}
+                subtitle={[note.billNumber && `Corrige ${note.billNumber}`, note.conceptLabel].filter(Boolean).join(' · ')}
+                reference={note.referenceCode}
+                total={note.total}
                 cufe={note.cufe}
-                isValidated={note.is_validated}
-                deleting={deletingCode === note.reference_code}
-                onDelete={() => removeCreditNote(note.reference_code)}
+                isValidated={note.isValidated}
+                isSimulated={note.isSimulated}
+                busy={busyId === note.identifier}
+                // Validada por la DIAN ya no se puede borrar: no se ofrece.
+                destructive={
+                  note.isValidated
+                    ? null
+                    : {
+                        label: 'Eliminar',
+                        verb: 'eliminar',
+                        consequence: 'La nota no está validada: se borrará de Factus.',
+                        run: () => deleteCreditNote(note),
+                      }
+                }
               />
             ))}
       </div>
@@ -188,9 +247,18 @@ export function HistoryPanel({ refreshSignal }) {
   );
 }
 
-// El mock devuelve { data: [...] }; Factus real pagina como { data: { data: [...] } }.
-function asList(response) {
-  const data = response?.data;
-  if (Array.isArray(data)) return data;
-  return Array.isArray(data?.data) ? data.data : [];
+function invoiceAction(view, run) {
+  return view.isValidated
+    ? {
+        label: 'Anular',
+        verb: 'anular',
+        consequence: `Se emitirá ante la DIAN una nota crédito de anulación por ${formatMoney(view.total)}. No se puede deshacer.`,
+        run,
+      }
+    : {
+        label: 'Eliminar',
+        verb: 'eliminar',
+        consequence: 'La factura no tiene CUFE: se borrará de Factus.',
+        run,
+      };
 }

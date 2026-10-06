@@ -32,24 +32,33 @@ export const DANE_MUNICIPALITIES = [
   { code: '05360', name: 'Itagüí', department: 'Antioquia', department_code: '05', aliases: ['itagui'] }
 ];
 
-/**
- * Resuelve el código numérico DANE DIVIPOLA a partir de un texto libre (ej: "Medellin" -> "05001").
- */
-export function resolveMunicipalityCode(query) {
-  if (!query) return '11001'; // Default Bogotá D.C.
-  const clean = query
+const normalize = (text) =>
+  String(text)
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .trim();
 
-  // Si ya viene como código de 5 dígitos
+/**
+ * Resuelve el código DANE DIVIPOLA a partir de texto libre ("Medellín" -> "05001")
+ * o de un código ya numérico. Devuelve null si no lo reconoce: es preferible
+ * omitir el municipio (Factus lo trata como opcional) a inventar uno equivocado
+ * en un documento fiscal.
+ */
+export function resolveMunicipalityCode(query) {
+  if (query == null || query === '') return null;
+  const clean = normalize(query);
   if (/^\d{5}$/.test(clean)) return clean;
 
-  const found = DANE_MUNICIPALITIES.find((m) =>
-    m.aliases.some((alias) => alias.normalize('NFD').replace(/[\u0300-\u036f]/g, '') === clean) ||
-    m.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(clean)
+  const exact = DANE_MUNICIPALITIES.find(
+    (m) => normalize(m.name) === clean || m.aliases.some((alias) => normalize(alias) === clean),
   );
+  if (exact) return exact.code;
 
-  return found ? found.code : '11001';
+  // Coincidencia parcial solo con textos suficientemente largos ("en medellin centro").
+  if (clean.length < 4) return null;
+  const partial = DANE_MUNICIPALITIES.find((m) =>
+    [m.name, ...m.aliases].some((alias) => clean.includes(normalize(alias))),
+  );
+  return partial ? partial.code : null;
 }

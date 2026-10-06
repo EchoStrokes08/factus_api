@@ -1,5 +1,6 @@
 import { DANE_MUNICIPALITIES } from '../config/daneDivipola.js';
 import {
+  CREDIT_NOTE_CONCEPT_LABEL,
   IDENTIFICATION_DOCUMENTS,
   LEGAL_ORGANIZATION,
   PAYMENT_FORM,
@@ -24,6 +25,7 @@ export function getCatalogs(req, res) {
       payment_forms: PAYMENT_FORM,
       payment_methods: PAYMENT_METHOD,
       taxes: TAX,
+      credit_note_concepts: CREDIT_NOTE_CONCEPT_LABEL,
     },
   });
 }
