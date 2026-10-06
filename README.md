@@ -188,14 +188,14 @@ npm run dev            # http://localhost:5173
 | Variable | Uso |
 |---|---|
 | `MOCK_MODE` | `false` (por defecto): APIs reales de Factus y Factus Pay (sandbox o producción según las URLs). `true`: simulador local. |
-| `FACTUS_BASE_URL`, `FACTUS_CLIENT_ID`, `FACTUS_CLIENT_SECRET`, `FACTUS_USERNAME`, `FACTUS_PASSWORD` | Credenciales OAuth2 de Factus. Vacías = las de sandbox incluidas en `backend/src/config/env.js`, así la app funciona sin configurar nada. |
+| `FACTUS_BASE_URL`, `FACTUS_CLIENT_ID`, `FACTUS_CLIENT_SECRET`, `FACTUS_USERNAME`, `FACTUS_PASSWORD` | Credenciales OAuth2 de Factus. Obligatorias si `MOCK_MODE=false`; se leen solo del entorno (`backend/.env` en local, Environment Variables en Vercel). |
 | `FACTUS_BILL_RANGE_ID`, `FACTUS_CREDIT_NOTE_RANGE_ID` | Opcionales. Vacíos = rango automático. |
 | `FACTUS_PAY_MOCK_MODE` | Opcional. `false`: los cobros van al sandbox real de Factus Pay aunque las facturas sean simuladas. Vacío = sigue a `MOCK_MODE`. |
-| `FACTUS_PAY_BASE_URL`, `FACTUS_PAY_EMAIL`, `FACTUS_PAY_PASSWORD` | Credenciales de Factus Pay. Vacías = las de sandbox incluidas en `env.js`. |
+| `FACTUS_PAY_BASE_URL`, `FACTUS_PAY_EMAIL`, `FACTUS_PAY_PASSWORD` | Credenciales de Factus Pay. Obligatorias si `FACTUS_PAY_MOCK_MODE` es `false`; se leen solo del entorno. |
 | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | Opcionales. Con clave, conversación libre con Claude; sin ella, asistente guiado. |
 | `FRONTEND_ORIGIN` | Orígenes permitidos por CORS (lista separada por comas o `*`). |
 
-**Despliegue:** `vercel.json` publica frontend y backend en el mismo dominio (`/api/*` → backend). El estado de la conversación viaja con cada mensaje, así que funciona en funciones serverless sin memoria compartida.
+**Despliegue:** `vercel.json` publica frontend y backend en el mismo dominio (`/api/*` → backend). Las credenciales se configuran en Vercel → Project Settings → Environment Variables, con las mismas claves de `backend/.env.example`; nunca en el código. El estado de la conversación viaja con cada mensaje, así que funciona en funciones serverless sin memoria compartida.
 
 **Pruebas manuales:** la colección `postman/Factus_API_Voz.postman_collection.json` encadena emitir → consultar → cobro → anular → nota parcial, con tests que verifican CUFE, concepto 2 e idempotencia.
 

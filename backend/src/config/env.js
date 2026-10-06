@@ -6,24 +6,13 @@ function bool(value, fallback) {
 }
 
 /**
- * Credenciales de SANDBOX incluidas a proposito para que la app funcione
- * sin configurar nada (local y Vercel). Cualquier variable de entorno las
- * reemplaza. No poner aqui credenciales de produccion: este archivo es publico.
+ * Las credenciales SOLO vienen de variables de entorno: backend/.env en local
+ * (ignorado por git) y Project Settings > Environment Variables en Vercel.
+ * Nunca escribir credenciales en este archivo: el repositorio es publico.
  */
-const SANDBOX_DEFAULTS = {
-  factus: {
-    clientId: 'REMOVIDO',
-    clientSecret: 'REMOVIDO',
-    username: 'REMOVIDO',
-    password: 'REMOVIDO',
-  },
-  factusPay: {
-    email: 'REMOVIDO',
-    password: 'REMOVIDO',
-  },
-  // Sin clave incluida: ANTHROPIC_API_KEY debe venir del entorno. Sin ella se
-  // usa el asistente guiado. Por defecto, endpoint de OpenRouter compatible
-  // con la API de Anthropic.
+const DEFAULTS = {
+  // Endpoint de OpenRouter compatible con la API de Anthropic. Sin
+  // ANTHROPIC_API_KEY se usa el asistente guiado.
   anthropic: {
     model: 'anthropic/claude-sonnet-4.5',
     baseUrl: 'https://openrouter.ai/api',
@@ -39,10 +28,10 @@ export const env = {
 
   factus: {
     baseUrl: process.env.FACTUS_BASE_URL || 'https://api-sandbox.factus.com.co',
-    clientId: process.env.FACTUS_CLIENT_ID || SANDBOX_DEFAULTS.factus.clientId,
-    clientSecret: process.env.FACTUS_CLIENT_SECRET || SANDBOX_DEFAULTS.factus.clientSecret,
-    username: process.env.FACTUS_USERNAME || SANDBOX_DEFAULTS.factus.username,
-    password: process.env.FACTUS_PASSWORD || SANDBOX_DEFAULTS.factus.password,
+    clientId: process.env.FACTUS_CLIENT_ID || '',
+    clientSecret: process.env.FACTUS_CLIENT_SECRET || '',
+    username: process.env.FACTUS_USERNAME || '',
+    password: process.env.FACTUS_PASSWORD || '',
     // Opcionales: vacios = el rango se resuelve con GET /v2/numbering-ranges.
     billRangeId: process.env.FACTUS_BILL_RANGE_ID || '',
     creditNoteRangeId: process.env.FACTUS_CREDIT_NOTE_RANGE_ID || '',
@@ -53,15 +42,15 @@ export const env = {
     // en el sandbox de Factus Pay. Si no se define, sigue a MOCK_MODE.
     mockMode: bool(process.env.FACTUS_PAY_MOCK_MODE, mockMode),
     baseUrl: process.env.FACTUS_PAY_BASE_URL || 'https://pay-api-sandbox.factus.com.co',
-    email: process.env.FACTUS_PAY_EMAIL || SANDBOX_DEFAULTS.factusPay.email,
-    password: process.env.FACTUS_PAY_PASSWORD || SANDBOX_DEFAULTS.factusPay.password,
+    email: process.env.FACTUS_PAY_EMAIL || '',
+    password: process.env.FACTUS_PAY_PASSWORD || '',
   },
 
   anthropic: {
     apiKey: process.env.ANTHROPIC_API_KEY || '',
     // Endpoint compatible con la API de Anthropic (p. ej. OpenRouter).
-    baseUrl: process.env.ANTHROPIC_BASE_URL || SANDBOX_DEFAULTS.anthropic.baseUrl,
-    model: process.env.ANTHROPIC_MODEL || SANDBOX_DEFAULTS.anthropic.model,
+    baseUrl: process.env.ANTHROPIC_BASE_URL || DEFAULTS.anthropic.baseUrl,
+    model: process.env.ANTHROPIC_MODEL || DEFAULTS.anthropic.model,
   },
 };
 
