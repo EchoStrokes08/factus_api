@@ -55,13 +55,13 @@ async function handleStep(session, said) {
       if (id.length < 5) return 'No entendí el número. Dímelo solo con dígitos, por ejemplo: 1020304050.';
       await runTool('update_customer', { identification: id }, session);
       session.flowStep = 'ask_customer_city';
-      return '¿En qué ciudad está el cliente? Si no importa, di "omitir".';
+      return '¿En qué ciudad está el cliente?';
     }
 
     case 'ask_customer_city': {
       if (!/^omit/i.test(said)) {
         if (!resolveMunicipalityCode(said)) {
-          return `No reconozco "${said}" en el catálogo DANE. Prueba con la capital más cercana o di "omitir".`;
+          return `No reconozco "${said}" en el catálogo DANE. Prueba con la capital más cercana.`;
         }
         await runTool('update_customer', { city: said }, session);
       }

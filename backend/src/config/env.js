@@ -21,6 +21,13 @@ const SANDBOX_DEFAULTS = {
     email: 'REMOVIDO',
     password: 'REMOVIDO',
   },
+  // Sin clave incluida: ANTHROPIC_API_KEY debe venir del entorno. Sin ella se
+  // usa el asistente guiado. Por defecto, endpoint de OpenRouter compatible
+  // con la API de Anthropic.
+  anthropic: {
+    model: 'anthropic/claude-sonnet-4.5',
+    baseUrl: 'https://openrouter.ai/api',
+  },
 };
 
 const mockMode = bool(process.env.MOCK_MODE, false);
@@ -52,7 +59,9 @@ export const env = {
 
   anthropic: {
     apiKey: process.env.ANTHROPIC_API_KEY || '',
-    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5',
+    // Endpoint compatible con la API de Anthropic (p. ej. OpenRouter).
+    baseUrl: process.env.ANTHROPIC_BASE_URL || SANDBOX_DEFAULTS.anthropic.baseUrl,
+    model: process.env.ANTHROPIC_MODEL || SANDBOX_DEFAULTS.anthropic.model,
   },
 };
 

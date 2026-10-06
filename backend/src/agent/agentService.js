@@ -28,7 +28,7 @@ Reglas:
 
 let anthropicClient = null;
 function getClient() {
-  if (!anthropicClient) anthropicClient = new Anthropic({ apiKey: env.anthropic.apiKey });
+  if (!anthropicClient) anthropicClient = new Anthropic({ apiKey: env.anthropic.apiKey, baseURL: env.anthropic.baseUrl });
   return anthropicClient;
 }
 
